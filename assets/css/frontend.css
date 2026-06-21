@@ -817,3 +817,119 @@
 		margin-inline-start: 0;
 	}
 }
+
+/* ------------------------------------------------------------------ */
+/* Theme override guard                                                */
+/* Some themes (e.g. Elementor "kit" styles like `.elementor-kit-4    */
+/* button`) target raw form elements with a higher specificity than   */
+/* the widget's single-class rules, hijacking fonts/colors/sizes.     */
+/* We re-assert the widget's own styling with a higher specificity by  */
+/* chaining the root class (`.pmg.pmg`) — no `!important` needed.      */
+/* ------------------------------------------------------------------ */
+.pmg.pmg button,
+.pmg.pmg input,
+.pmg.pmg select,
+.pmg.pmg textarea {
+	font-family: inherit;
+	letter-spacing: normal;
+	text-transform: none;
+}
+
+.pmg.pmg .pmg__btn {
+	font-size: 15px;
+	font-weight: 500;
+	border: 1.5px solid var(--pmg-ink);
+	border-radius: 12px;
+	background: transparent;
+	color: var(--pmg-ink);
+}
+
+.pmg.pmg .pmg__btn:hover {
+	background: var(--pmg-ink);
+	color: var(--pmg-paper);
+}
+
+.pmg.pmg .pmg__btn--primary {
+	border-color: var(--pmg-accent);
+	background: var(--pmg-accent);
+	color: var(--pmg-accent-ink);
+}
+
+.pmg.pmg .pmg__btn--primary:hover {
+	background: transparent;
+	color: var(--pmg-accent);
+}
+
+.pmg.pmg .pmg__btn--ghost {
+	border-color: var(--pmg-rule);
+	background: transparent;
+	color: var(--pmg-muted);
+}
+
+.pmg.pmg .pmg__btn--ghost:hover {
+	background: var(--pmg-bg);
+	color: var(--pmg-ink);
+}
+
+.pmg.pmg .pmg__tool {
+	font-size: 13px;
+	font-weight: 500;
+	background: transparent;
+	color: var(--pmg-ink);
+}
+
+.pmg.pmg .pmg__tool:hover {
+	background: var(--pmg-bg);
+}
+
+.pmg.pmg .pmg__add {
+	background: var(--pmg-accent);
+	color: var(--pmg-accent-ink);
+}
+
+.pmg.pmg .pmg__upload-option {
+	background: var(--pmg-paper);
+	color: var(--pmg-ink);
+	font-size: inherit;
+}
+
+.pmg.pmg .pmg__modal-close {
+	background: transparent;
+	color: var(--pmg-muted);
+}
+
+.pmg.pmg .pmg__modal-close:hover {
+	background: var(--pmg-bg);
+	color: var(--pmg-ink);
+}
+
+.pmg.pmg .pmg__zoom-badge {
+	background: rgb(20 20 22 / 55%);
+	color: #fff;
+}
+
+.pmg.pmg .pmg__zoom-badge:hover {
+	background: var(--pmg-accent);
+}
+
+.pmg.pmg .pmg__lightbox-close {
+	background: rgb(255 255 255 / 12%);
+	color: #fff;
+}
+
+.pmg.pmg .pmg__lightbox-close:hover {
+	background: rgb(255 255 255 / 22%);
+}
+
+.pmg.pmg .pmg__input {
+	font-size: 16px;
+	color: var(--pmg-ink);
+	background: var(--pmg-bg);
+	border: 1.5px solid var(--pmg-rule);
+	border-radius: 14px;
+}
+
+.pmg.pmg .pmg__input:focus {
+	background: var(--pmg-paper);
+	border-color: var(--pmg-accent);
+}
