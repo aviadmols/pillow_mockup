@@ -205,14 +205,24 @@ class PMG_Rest {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function lead( WP_REST_Request $request ) {
-		$session = $this->resolve_session( $request->get_param( 'session' ) );
-		$name    = sanitize_text_field( (string) $request->get_param( 'name' ) );
-		$phone   = sanitize_text_field( (string) $request->get_param( 'phone' ) );
-		$email   = sanitize_email( (string) $request->get_param( 'email' ) );
+		$session    = $this->resolve_session( $request->get_param( 'session' ) );
+		$first_name = sanitize_text_field( (string) $request->get_param( 'first_name' ) );
+		$last_name  = sanitize_text_field( (string) $request->get_param( 'last_name' ) );
+		$phone      = sanitize_text_field( (string) $request->get_param( 'phone' ) );
+		$email      = sanitize_email( (string) $request->get_param( 'email' ) );
+
+		// Combine into the full name stored on the lead (with backward compatibility).
+		$name = trim( $first_name . ' ' . $last_name );
+		if ( '' === $name ) {
+			$name = sanitize_text_field( (string) $request->get_param( 'name' ) );
+		}
 
 		$errors = array();
-		if ( '' === $name ) {
-			$errors['name'] = __( 'Name is required.', 'pillow-mockup-generator' );
+		if ( '' === $first_name ) {
+			$errors['first_name'] = __( 'First name is required.', 'pillow-mockup-generator' );
+		}
+		if ( '' === $last_name ) {
+			$errors['last_name'] = __( 'Last name is required.', 'pillow-mockup-generator' );
 		}
 		if ( '' === $phone ) {
 			$errors['phone'] = __( 'Phone is required.', 'pillow-mockup-generator' );

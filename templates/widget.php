@@ -80,15 +80,28 @@ $pmg_extra_class = isset( $atts['class'] ) ? sanitize_html_class( $atts['class']
 					<p class="pmg__form-subtitle"><?php echo esc_html( $settings['text_details_subtitle'] ); ?></p>
 				<?php endif; ?>
 
-				<div class="pmg__field">
-					<label class="pmg__label" for="pmg-name"><?php echo esc_html( $settings['text_name'] ); ?></label>
-					<div class="pmg__input-wrap">
-						<span class="pmg__input-icon" aria-hidden="true">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-						</span>
-						<input class="pmg__input" type="text" id="pmg-name" name="name" autocomplete="name" placeholder="<?php echo esc_attr( $settings['text_name'] ); ?>" data-pmg-input="name" />
+				<div class="pmg__field-row">
+					<div class="pmg__field">
+						<label class="pmg__label" for="pmg-first-name"><?php echo esc_html( $settings['text_first_name'] ); ?></label>
+						<div class="pmg__input-wrap">
+							<span class="pmg__input-icon" aria-hidden="true">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+							</span>
+							<input class="pmg__input" type="text" id="pmg-first-name" name="first_name" autocomplete="given-name" placeholder="<?php echo esc_attr( $settings['text_first_name'] ); ?>" data-pmg-input="first_name" />
+						</div>
+						<span class="pmg__error" data-pmg-error="first_name"></span>
 					</div>
-					<span class="pmg__error" data-pmg-error="name"></span>
+
+					<div class="pmg__field">
+						<label class="pmg__label" for="pmg-last-name"><?php echo esc_html( $settings['text_last_name'] ); ?></label>
+						<div class="pmg__input-wrap">
+							<span class="pmg__input-icon" aria-hidden="true">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+							</span>
+							<input class="pmg__input" type="text" id="pmg-last-name" name="last_name" autocomplete="family-name" placeholder="<?php echo esc_attr( $settings['text_last_name'] ); ?>" data-pmg-input="last_name" />
+						</div>
+						<span class="pmg__error" data-pmg-error="last_name"></span>
+					</div>
 				</div>
 
 				<div class="pmg__field">

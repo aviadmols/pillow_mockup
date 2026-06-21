@@ -87,6 +87,8 @@ class PMG_Settings {
 			'text_details_subtitle' => 'שמרו את העיצוב ונשלח לכם אותו ישירות — זה לוקח רק כמה שניות.',
 			'text_privacy_note' => 'הפרטים שלכם שמורים אצלנו — בלי ספאם, אף פעם.',
 			'text_name'         => 'שם מלא',
+			'text_first_name'   => 'שם פרטי',
+			'text_last_name'    => 'שם משפחה',
 			'text_phone'        => 'טלפון',
 			'text_email'        => 'אימייל',
 			'text_submit'       => 'המשך',

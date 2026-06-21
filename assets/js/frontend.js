@@ -455,14 +455,16 @@
 			var el = self.root.querySelector('[data-pmg-input="' + name + '"]');
 			return el ? el.value.trim() : '';
 		};
-		var name = get('name');
+		var firstName = get('first_name');
+		var lastName = get('last_name');
 		var phone = get('phone');
 		var email = get('email');
 
-		['name', 'phone', 'email'].forEach(function (f) { self.fieldError(f, ''); });
+		['first_name', 'last_name', 'phone', 'email'].forEach(function (f) { self.fieldError(f, ''); });
 
 		var valid = true;
-		if (!name) { this.fieldError('name', '•'); valid = false; }
+		if (!firstName) { this.fieldError('first_name', '•'); valid = false; }
+		if (!lastName) { this.fieldError('last_name', '•'); valid = false; }
 		if (!phone) { this.fieldError('phone', '•'); valid = false; }
 		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { this.fieldError('email', '•'); valid = false; }
 		if (!valid) {
@@ -474,7 +476,8 @@
 
 		api('lead', {
 			session: this.state.session,
-			name: name,
+			first_name: firstName,
+			last_name: lastName,
 			phone: phone,
 			email: email
 		}).then(function (res) {

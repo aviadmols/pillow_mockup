@@ -489,6 +489,23 @@
 	text-align: start;
 }
 
+.pmg__field-row {
+	display: flex;
+	gap: 12px;
+}
+
+.pmg__field-row .pmg__field {
+	flex: 1;
+	min-width: 0;
+}
+
+@media (max-width: 480px) {
+	.pmg__field-row {
+		flex-direction: column;
+		gap: 0;
+	}
+}
+
 .pmg__label {
 	display: block;
 	font-size: 13px;
