@@ -91,9 +91,6 @@ $pmg_extra_class = isset( $atts['class'] ) ? sanitize_html_class( $atts['class']
 					<div class="pmg__field">
 						<label class="pmg__label" for="pmg-first-name"><?php echo esc_html( $settings['text_first_name'] ); ?></label>
 						<div class="pmg__input-wrap">
-							<span class="pmg__input-icon" aria-hidden="true">
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-							</span>
 							<input class="pmg__input" type="text" id="pmg-first-name" name="first_name" autocomplete="given-name" placeholder="<?php echo esc_attr( $settings['text_first_name'] ); ?>" data-pmg-input="first_name" />
 						</div>
 						<span class="pmg__error" data-pmg-error="first_name"></span>
@@ -102,9 +99,6 @@ $pmg_extra_class = isset( $atts['class'] ) ? sanitize_html_class( $atts['class']
 					<div class="pmg__field">
 						<label class="pmg__label" for="pmg-last-name"><?php echo esc_html( $settings['text_last_name'] ); ?></label>
 						<div class="pmg__input-wrap">
-							<span class="pmg__input-icon" aria-hidden="true">
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-							</span>
 							<input class="pmg__input" type="text" id="pmg-last-name" name="last_name" autocomplete="family-name" placeholder="<?php echo esc_attr( $settings['text_last_name'] ); ?>" data-pmg-input="last_name" />
 						</div>
 						<span class="pmg__error" data-pmg-error="last_name"></span>
@@ -114,9 +108,6 @@ $pmg_extra_class = isset( $atts['class'] ) ? sanitize_html_class( $atts['class']
 				<div class="pmg__field">
 					<label class="pmg__label" for="pmg-phone"><?php echo esc_html( $settings['text_phone'] ); ?></label>
 					<div class="pmg__input-wrap">
-						<span class="pmg__input-icon" aria-hidden="true">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.94.36 1.86.7 2.74a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.88.34 1.8.57 2.74.7A2 2 0 0 1 22 16.92z"/></svg>
-						</span>
 						<input class="pmg__input" type="tel" id="pmg-phone" name="phone" autocomplete="tel" placeholder="<?php echo esc_attr( $settings['text_phone'] ); ?>" data-pmg-input="phone" />
 					</div>
 					<span class="pmg__error" data-pmg-error="phone"></span>
@@ -125,9 +116,6 @@ $pmg_extra_class = isset( $atts['class'] ) ? sanitize_html_class( $atts['class']
 				<div class="pmg__field">
 					<label class="pmg__label" for="pmg-email"><?php echo esc_html( $settings['text_email'] ); ?></label>
 					<div class="pmg__input-wrap">
-						<span class="pmg__input-icon" aria-hidden="true">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-						</span>
 						<input class="pmg__input" type="email" id="pmg-email" name="email" autocomplete="email" placeholder="<?php echo esc_attr( $settings['text_email'] ); ?>" data-pmg-input="email" />
 					</div>
 					<span class="pmg__error" data-pmg-error="email"></span>
