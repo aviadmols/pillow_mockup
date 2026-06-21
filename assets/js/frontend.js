@@ -61,7 +61,7 @@
 			var d = result.data || {};
 			// Only retry on WordPress core "forbidden" shapes, never on our own
 			// 403 codes (e.g. need_details), so the details gate is preserved.
-			var coreForbidden = result.status === 403 && (!d.code || d.code.indexOf('rest_') === 0);
+			var coreForbidden = (result.status === 401 || result.status === 403) && (!d.code || d.code.indexOf('rest_') === 0);
 			if (coreForbidden && !retried) {
 				return refreshNonce().then(function () {
 					return api(path, body, true);
@@ -167,6 +167,10 @@
 		if (!this.els.lottie) {
 			return;
 		}
+		if (this.lottie) {
+			return;
+		}
+		this.els.lottie.innerHTML = '';
 		if (typeof window.lottie === 'undefined' || !CFG.lottieUrl) {
 			this.root.classList.add('is-no-lottie');
 			return;
