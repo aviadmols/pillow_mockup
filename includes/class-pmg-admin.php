@@ -479,6 +479,8 @@ class PMG_Admin {
 						'text_continue'      => __( '"I love it" label', 'pillow-mockup-generator' ),
 						'text_finalize'      => __( 'Finalize label', 'pillow-mockup-generator' ),
 						'text_details_title' => __( 'Details form title', 'pillow-mockup-generator' ),
+						'text_details_subtitle' => __( 'Details form subtitle', 'pillow-mockup-generator' ),
+						'text_privacy_note'  => __( 'Details privacy note', 'pillow-mockup-generator' ),
 						'text_name'          => __( 'Name field label', 'pillow-mockup-generator' ),
 						'text_phone'         => __( 'Phone field label', 'pillow-mockup-generator' ),
 						'text_email'         => __( 'Email field label', 'pillow-mockup-generator' ),

@@ -84,6 +84,8 @@ class PMG_Settings {
 			'text_continue'     => 'I love it',
 			'text_finalize'     => 'Choose this product',
 			'text_details_title'=> 'Almost there — your details',
+			'text_details_subtitle' => 'Save your design and we will send it straight to you — it only takes a few seconds.',
+			'text_privacy_note' => 'Your details are safe with us — no spam, ever.',
 			'text_name'         => 'Full name',
 			'text_phone'        => 'Phone',
 			'text_email'        => 'Email',

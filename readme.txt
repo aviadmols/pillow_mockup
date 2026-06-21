@@ -4,7 +4,7 @@ Tags: ai, openrouter, mockup, lead generation, image generation
 Requires at least: 5.8
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 
 Mixtiles-style widget that turns a customer photo into a custom-shaped pillow mockup with OpenRouter, captures leads, and saves the original / mockup / print-ready cut-out images.
@@ -40,6 +40,9 @@ Each registrant stores three files: the original photo, the chosen mockup, and t
 4. Add `[pillow_mockup]` to any page or post.
 
 == Changelog ==
+
+= 1.0.4 =
+* Improved: a more inviting details form — filled rounded inputs with leading icons, friendly focus glow, an encouraging subtitle, a privacy reassurance line, and softer buttons. The subtitle and privacy note are editable in Settings.
 
 = 1.0.3 =
 * New: redesigned the upload screen in a Mixtiles style — an empty framed placeholder with a pink "+" button that opens an upload popup ("Upload Photos"). Drag & drop still supported.
