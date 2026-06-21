@@ -138,6 +138,8 @@
 			dropzone: root.querySelector('[data-pmg-dropzone]'),
 			modal: root.querySelector('[data-pmg-modal]'),
 			uploadOption: root.querySelector('[data-pmg-upload]'),
+			lightbox: root.querySelector('[data-pmg-lightbox]'),
+			zoomImg: root.querySelector('[data-pmg-zoom-img]'),
 			result: root.querySelector('[data-pmg-result]'),
 			lottie: root.querySelector('[data-pmg-lottie]'),
 			loadingText: root.querySelector('[data-pmg-loading-text]'),
@@ -255,8 +257,36 @@
 		document.addEventListener('keydown', function (e) {
 			if (e.key === 'Escape') {
 				self.closeModal();
+				self.closeZoom();
 			}
 		});
+
+		// Zoom lightbox: open from the result image / badge, close on backdrop or X.
+		this.root.querySelectorAll('[data-pmg-zoom-open]').forEach(function (el) {
+			el.addEventListener('click', function () {
+				self.openZoom();
+			});
+		});
+		this.root.querySelectorAll('[data-pmg-zoom-close]').forEach(function (el) {
+			el.addEventListener('click', function () {
+				self.closeZoom();
+			});
+		});
+		if (this.els.zoomImg) {
+			this.els.zoomImg.addEventListener('click', function (e) {
+				var zoomed = this.classList.toggle('is-zoomed');
+				if (zoomed) {
+					self.setZoomOrigin(e);
+				} else {
+					this.style.transformOrigin = 'center center';
+				}
+			});
+			this.els.zoomImg.addEventListener('mousemove', function (e) {
+				if (this.classList.contains('is-zoomed')) {
+					self.setZoomOrigin(e);
+				}
+			});
+		}
 
 		// Drag & drop on the dropzone.
 		if (this.els.dropzone) {
@@ -306,6 +336,45 @@
 		if (this.els.modal) {
 			this.els.modal.hidden = true;
 		}
+	};
+
+	Widget.prototype.openZoom = function () {
+		if (!this.els.lightbox || !this.els.result) {
+			return;
+		}
+		var src = this.els.result.getAttribute('src');
+		if (!src) {
+			return;
+		}
+		if (this.els.zoomImg) {
+			this.els.zoomImg.classList.remove('is-zoomed');
+			this.els.zoomImg.style.transformOrigin = 'center center';
+			this.els.zoomImg.src = src;
+		}
+		this.els.lightbox.hidden = false;
+	};
+
+	Widget.prototype.closeZoom = function () {
+		if (this.els.lightbox) {
+			this.els.lightbox.hidden = true;
+		}
+		if (this.els.zoomImg) {
+			this.els.zoomImg.classList.remove('is-zoomed');
+			this.els.zoomImg.style.transformOrigin = 'center center';
+		}
+	};
+
+	Widget.prototype.setZoomOrigin = function (e) {
+		var img = this.els.zoomImg;
+		if (!img) {
+			return;
+		}
+		var rect = img.getBoundingClientRect();
+		var x = ((e.clientX - rect.left) / rect.width) * 100;
+		var y = ((e.clientY - rect.top) / rect.height) * 100;
+		x = Math.max(0, Math.min(100, x));
+		y = Math.max(0, Math.min(100, y));
+		img.style.transformOrigin = x + '% ' + y + '%';
 	};
 
 	Widget.prototype.onAction = function (action) {

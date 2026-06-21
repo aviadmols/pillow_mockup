@@ -47,7 +47,10 @@ $pmg_extra_class = isset( $atts['class'] ) ? sanitize_html_class( $atts['class']
 		<!-- Preview -->
 		<div class="pmg__panel pmg__panel--preview" data-panel="preview">
 			<figure class="pmg__frame">
-				<img class="pmg__result" src="" alt="<?php esc_attr_e( 'Your custom pillow mockup', 'pillow-mockup-generator' ); ?>" data-pmg-result />
+				<img class="pmg__result" src="" alt="<?php esc_attr_e( 'Your custom pillow mockup', 'pillow-mockup-generator' ); ?>" data-pmg-result data-pmg-zoom-open />
+				<button type="button" class="pmg__zoom-badge" data-pmg-zoom-open aria-label="<?php esc_attr_e( 'Zoom in', 'pillow-mockup-generator' ); ?>">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>
+				</button>
 			</figure>
 
 			<div class="pmg__toolbar" data-pmg-toolbar>
@@ -167,6 +170,17 @@ $pmg_extra_class = isset( $atts['class'] ) ? sanitize_html_class( $atts['class']
 				<span class="pmg__upload-label"><?php echo esc_html( $settings['text_upload'] ); ?></span>
 				<span class="pmg__upload-hint"><?php esc_html_e( 'JPG, PNG or WEBP', 'pillow-mockup-generator' ); ?></span>
 			</button>
+		</div>
+	</div>
+
+	<!-- Zoom lightbox for the generated mockup -->
+	<div class="pmg__lightbox" data-pmg-lightbox hidden>
+		<div class="pmg__lightbox-backdrop" data-pmg-zoom-close></div>
+		<button type="button" class="pmg__lightbox-close" data-pmg-zoom-close aria-label="<?php esc_attr_e( 'Close', 'pillow-mockup-generator' ); ?>">
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+		</button>
+		<div class="pmg__lightbox-stage">
+			<img class="pmg__lightbox-img" src="" alt="<?php esc_attr_e( 'Your custom pillow mockup', 'pillow-mockup-generator' ); ?>" data-pmg-zoom-img />
 		</div>
 	</div>
 </div>

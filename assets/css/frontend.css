@@ -369,6 +369,7 @@
 
 /* Preview frame (white photo-frame look) */
 .pmg__frame {
+	position: relative;
 	display: inline-block;
 	max-width: 100%;
 	margin: 0 auto;
@@ -391,6 +392,112 @@
 	width: auto;
 	height: auto;
 	border-radius: calc(var(--pmg-radius) - 3px);
+	cursor: zoom-in;
+}
+
+/* Zoom badge over the generated mockup */
+.pmg__zoom-badge {
+	position: absolute;
+	inset-block-end: clamp(22px, 3.5vw, 38px);
+	inset-inline-end: clamp(22px, 3.5vw, 38px);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	height: 42px;
+	border: 0;
+	border-radius: 50%;
+	background: rgb(20 20 22 / 55%);
+	color: #fff;
+	cursor: zoom-in;
+	backdrop-filter: blur(4px);
+	transition: var(--pmg-transition);
+}
+
+.pmg__zoom-badge svg {
+	width: 20px;
+	height: 20px;
+}
+
+.pmg__zoom-badge:hover {
+	background: var(--pmg-accent);
+	transform: scale(1.08);
+}
+
+/* Zoom lightbox */
+.pmg__lightbox {
+	position: fixed;
+	inset: 0;
+	z-index: 100001;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+.pmg__lightbox[hidden] {
+	display: none;
+}
+
+.pmg__lightbox-backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgb(12 12 14 / 88%);
+	animation: pmg-fade 0.3s ease both;
+}
+
+.pmg__lightbox-close {
+	position: absolute;
+	inset-block-start: 18px;
+	inset-inline-end: 18px;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border: 0;
+	border-radius: 50%;
+	background: rgb(255 255 255 / 12%);
+	color: #fff;
+	cursor: pointer;
+	transition: var(--pmg-transition);
+}
+
+.pmg__lightbox-close:hover {
+	background: rgb(255 255 255 / 22%);
+}
+
+.pmg__lightbox-close svg {
+	width: 22px;
+	height: 22px;
+}
+
+.pmg__lightbox-stage {
+	position: relative;
+	z-index: 1;
+	max-width: 92vw;
+	max-height: 88vh;
+	overflow: hidden;
+	border-radius: 12px;
+	animation: pmg-pop 0.3s ease both;
+}
+
+.pmg__lightbox-img {
+	display: block;
+	max-width: 92vw;
+	max-height: 88vh;
+	width: auto;
+	height: auto;
+	cursor: zoom-in;
+	transform: scale(1);
+	transition: transform 0.3s ease;
+	will-change: transform;
+}
+
+.pmg__lightbox-img.is-zoomed {
+	transform: scale(2.4);
+	cursor: zoom-out;
 }
 
 /* Toolbar (floating action card) */
