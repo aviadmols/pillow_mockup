@@ -4,7 +4,7 @@ Tags: ai, openrouter, mockup, lead generation, image generation
 Requires at least: 5.8
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 
 Mixtiles-style widget that turns a customer photo into a custom-shaped pillow mockup with OpenRouter, captures leads, and saves the original / mockup / print-ready cut-out images.
@@ -40,6 +40,9 @@ Each registrant stores three files: the original photo, the chosen mockup, and t
 4. Add `[pillow_mockup]` to any page or post.
 
 == Changelog ==
+
+= 1.0.3 =
+* New: redesigned the upload screen in a Mixtiles style — an empty framed placeholder with a pink "+" button that opens an upload popup ("Upload Photos"). Drag & drop still supported.
 
 = 1.0.2 =
 * New: choose the mockup and cut-out models from a dropdown of all Nano Banana models (Gemini 2.5 Flash Image, 2.5 Preview, 3.1 Flash Image, and Nano Banana Pro), with an "Other / custom model" option for any other OpenRouter image model.

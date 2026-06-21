@@ -22,16 +22,20 @@ $pmg_rtl_class   = is_rtl() ? ' pmg--rtl' : '';
 
 	<div class="pmg__stage">
 
-		<!-- Upload -->
+		<!-- Upload (Mixtiles-style empty frame + add button) -->
 		<div class="pmg__panel pmg__panel--upload" data-panel="upload">
-			<label class="pmg__dropzone" data-pmg-dropzone>
-				<input type="file" class="pmg__file" accept="image/png,image/jpeg,image/webp" data-pmg-file hidden />
-				<span class="pmg__dropzone-icon" aria-hidden="true">
-					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>
-				</span>
-				<span class="pmg__btn pmg__btn--primary"><?php echo esc_html( $settings['text_upload'] ); ?></span>
-				<span class="pmg__dropzone-hint"><?php esc_html_e( 'JPG, PNG or WEBP', 'pillow-mockup-generator' ); ?></span>
-			</label>
+			<input type="file" class="pmg__file" accept="image/png,image/jpeg,image/webp" data-pmg-file hidden />
+			<div class="pmg__placeholder">
+				<div class="pmg__placeholder-frame" data-pmg-dropzone data-pmg-open-modal role="button" tabindex="0" aria-label="<?php echo esc_attr( $settings['text_upload'] ); ?>">
+					<span class="pmg__placeholder-icon" aria-hidden="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L5 21"/></svg>
+					</span>
+				</div>
+				<button type="button" class="pmg__add" data-pmg-open-modal aria-label="<?php echo esc_attr( $settings['text_upload'] ); ?>">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+				</button>
+				<p class="pmg__placeholder-hint"><?php echo esc_html( $settings['text_upload'] ); ?></p>
+			</div>
 		</div>
 
 		<!-- Loading -->
@@ -110,6 +114,23 @@ $pmg_rtl_class   = is_rtl() ? ' pmg--rtl' : '';
 			<p class="pmg__done-message"><?php echo esc_html( $settings['text_done_message'] ); ?></p>
 		</div>
 
+	</div>
+
+	<!-- Upload modal (opens from the + button, Mixtiles-style) -->
+	<div class="pmg__modal" data-pmg-modal hidden>
+		<div class="pmg__modal-backdrop" data-pmg-close-modal></div>
+		<div class="pmg__modal-card" role="dialog" aria-modal="true" aria-label="<?php echo esc_attr( $settings['text_upload'] ); ?>">
+			<button type="button" class="pmg__modal-close" data-pmg-close-modal aria-label="<?php esc_attr_e( 'Close', 'pillow-mockup-generator' ); ?>">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+			</button>
+			<button type="button" class="pmg__upload-option" data-pmg-upload>
+				<span class="pmg__upload-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>
+				</span>
+				<span class="pmg__upload-label"><?php echo esc_html( $settings['text_upload'] ); ?></span>
+				<span class="pmg__upload-hint"><?php esc_html_e( 'JPG, PNG or WEBP', 'pillow-mockup-generator' ); ?></span>
+			</button>
+		</div>
 	</div>
 </div>
 <?php

@@ -136,6 +136,8 @@
 		this.els = {
 			file: root.querySelector('[data-pmg-file]'),
 			dropzone: root.querySelector('[data-pmg-dropzone]'),
+			modal: root.querySelector('[data-pmg-modal]'),
+			uploadOption: root.querySelector('[data-pmg-upload]'),
 			result: root.querySelector('[data-pmg-result]'),
 			lottie: root.querySelector('[data-pmg-lottie]'),
 			loadingText: root.querySelector('[data-pmg-loading-text]'),
@@ -220,10 +222,41 @@
 		if (this.els.file) {
 			this.els.file.addEventListener('change', function () {
 				if (this.files && this.files[0]) {
+					self.closeModal();
 					self.handleFile(this.files[0]);
 				}
 			});
 		}
+
+		// Upload modal: open from the + button / frame, close on backdrop or X.
+		this.root.querySelectorAll('[data-pmg-open-modal]').forEach(function (el) {
+			el.addEventListener('click', function () {
+				self.openModal();
+			});
+			el.addEventListener('keydown', function (e) {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					self.openModal();
+				}
+			});
+		});
+		this.root.querySelectorAll('[data-pmg-close-modal]').forEach(function (el) {
+			el.addEventListener('click', function () {
+				self.closeModal();
+			});
+		});
+		if (this.els.uploadOption) {
+			this.els.uploadOption.addEventListener('click', function () {
+				if (self.els.file) {
+					self.els.file.click();
+				}
+			});
+		}
+		document.addEventListener('keydown', function (e) {
+			if (e.key === 'Escape') {
+				self.closeModal();
+			}
+		});
 
 		// Drag & drop on the dropzone.
 		if (this.els.dropzone) {
@@ -260,6 +293,18 @@
 				e.preventDefault();
 				self.submitLead();
 			});
+		}
+	};
+
+	Widget.prototype.openModal = function () {
+		if (this.els.modal) {
+			this.els.modal.hidden = false;
+		}
+	};
+
+	Widget.prototype.closeModal = function () {
+		if (this.els.modal) {
+			this.els.modal.hidden = true;
 		}
 	};
 
