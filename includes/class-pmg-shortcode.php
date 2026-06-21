@@ -36,16 +36,9 @@ class PMG_Shortcode {
 	 */
 	public function register_assets() {
 		wp_register_style(
-			'pmg-heebo',
-			'https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap',
-			array(),
-			PMG_VERSION
-		);
-
-		wp_register_style(
 			'pmg-frontend',
 			PMG_PLUGIN_URL . 'assets/css/frontend.css',
-			array( 'pmg-heebo' ),
+			array(),
 			PMG_VERSION
 		);
 
@@ -78,7 +71,6 @@ class PMG_Shortcode {
 		}
 		$this->enqueued = true;
 
-		wp_enqueue_style( 'pmg-heebo' );
 		wp_enqueue_style( 'pmg-frontend' );
 		wp_enqueue_script( 'pmg-lottie' );
 		wp_enqueue_script( 'pmg-frontend' );

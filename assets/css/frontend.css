@@ -15,11 +15,11 @@
 	--pmg-shadow: rgb(0 0 0 / 16%) 0 47px 46px -27px, rgb(0 0 0 / 6%) 0 2px 12px 0;
 	--pmg-shadow-hover: rgb(0 0 0 / 16%) 0 47px 46px -27px, rgb(0 0 0 / 16%) 0 2px 12px 0;
 	--pmg-transition: all 0.5s ease;
-	--pmg-font: "Heebo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 
 	box-sizing: border-box;
-	font-family: var(--pmg-font);
+	font-family: inherit;
 	color: var(--pmg-ink);
+	direction: rtl;
 	max-width: 720px;
 	margin-inline: auto;
 	padding: clamp(24px, 5vw, 56px) 20px;

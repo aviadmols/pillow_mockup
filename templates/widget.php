@@ -11,9 +11,8 @@
 defined( 'ABSPATH' ) || exit;
 
 $pmg_extra_class = isset( $atts['class'] ) ? sanitize_html_class( $atts['class'] ) : '';
-$pmg_rtl_class   = is_rtl() ? ' pmg--rtl' : '';
 ?>
-<div class="pmg<?php echo esc_attr( $pmg_rtl_class ); ?> <?php echo esc_attr( $pmg_extra_class ); ?>" data-pmg data-state="upload"<?php echo is_rtl() ? ' dir="rtl"' : ''; ?>>
+<div class="pmg pmg--rtl <?php echo esc_attr( $pmg_extra_class ); ?>" data-pmg data-state="upload" dir="rtl">
 
 	<header class="pmg__head">
 		<h2 class="pmg__title"><?php echo esc_html( $settings['text_heading'] ); ?></h2>

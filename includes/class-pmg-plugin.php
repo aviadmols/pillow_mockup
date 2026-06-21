@@ -82,5 +82,8 @@ class PMG_Plugin {
 			PMG_Activator::create_tables();
 			PMG_Activator::ensure_upload_dir();
 		}
+
+		// Switch untouched front-end texts to Hebrew on existing installs (runs once).
+		PMG_Settings::maybe_migrate_texts();
 	}
 }
