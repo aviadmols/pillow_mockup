@@ -532,12 +532,16 @@
 
 /* Toolbar (floating action card) */
 .pmg__toolbar {
+	position: sticky;
+	bottom: 16px;
+	z-index: 20;
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
 	margin-block-start: clamp(20px, 4vw, 32px);
 	padding: 10px;
 	background: var(--pmg-paper);
+	border: 1px solid var(--pmg-rule);
 	border-radius: 16px;
 	box-shadow: var(--pmg-shadow);
 	flex-wrap: wrap;
