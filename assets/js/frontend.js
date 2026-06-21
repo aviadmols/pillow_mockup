@@ -11,23 +11,63 @@
 
 	var CFG = window.PMG_CONFIG;
 
+	// Live nonce — refreshed from the public endpoint so cached pages still work.
+	var currentNonce = CFG.nonce;
+
 	/**
-	 * POST JSON to a plugin REST endpoint.
+	 * Fetch a fresh REST nonce (never cached). Always resolves.
 	 */
-	function api(path, body) {
+	function refreshNonce() {
+		if (!CFG.nonceUrl) {
+			return Promise.resolve(currentNonce);
+		}
+		return fetch(CFG.nonceUrl, {
+			method: 'GET',
+			headers: { 'X-WP-Nonce': currentNonce },
+			credentials: 'same-origin',
+			cache: 'no-store'
+		}).then(function (res) {
+			return res.json();
+		}).then(function (data) {
+			if (data && data.nonce) {
+				currentNonce = data.nonce;
+			}
+			return currentNonce;
+		}).catch(function () {
+			return currentNonce;
+		});
+	}
+
+	/**
+	 * POST JSON to a plugin REST endpoint. Transparently refreshes the nonce and
+	 * retries once if WordPress rejects the request as forbidden (stale nonce).
+	 */
+	function api(path, body, retried) {
 		return fetch(CFG.restUrl + path, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-PMG-Nonce': CFG.nonce
+				'X-WP-Nonce': currentNonce
 			},
-			body: JSON.stringify(Object.assign({ nonce: CFG.nonce }, body || {}))
+			credentials: 'same-origin',
+			body: JSON.stringify(Object.assign({ _wpnonce: currentNonce }, body || {}))
 		}).then(function (res) {
 			return res.json().then(function (data) {
 				return { status: res.status, ok: res.ok, data: data || {} };
 			}).catch(function () {
 				return { status: res.status, ok: res.ok, data: {} };
 			});
+		}).then(function (result) {
+			var d = result.data || {};
+			// Only retry on WordPress core "forbidden" shapes, never on our own
+			// 403 codes (e.g. need_details), so the details gate is preserved.
+			var coreForbidden = result.status === 403 && (!d.code || d.code.indexOf('rest_') === 0);
+			if (coreForbidden && !retried) {
+				return refreshNonce().then(function () {
+					return api(path, body, true);
+				});
+			}
+			return result;
 		});
 	}
 
@@ -455,6 +495,11 @@
 	// Boot all widgets on the page.
 	document.addEventListener('DOMContentLoaded', function () {
 		var roots = document.querySelectorAll('[data-pmg]');
+		if (!roots.length) {
+			return;
+		}
+		// Pull a live nonce up front so the first action works on cached pages.
+		refreshNonce();
 		Array.prototype.forEach.call(roots, function (root) {
 			new Widget(root);
 		});

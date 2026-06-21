@@ -45,20 +45,46 @@ class PMG_Rest {
 		register_rest_route( PMG_REST_NAMESPACE, '/generate', array_merge( $args, array( 'callback' => array( $this, 'generate' ) ) ) );
 		register_rest_route( PMG_REST_NAMESPACE, '/lead', array_merge( $args, array( 'callback' => array( $this, 'lead' ) ) ) );
 		register_rest_route( PMG_REST_NAMESPACE, '/finalize', array_merge( $args, array( 'callback' => array( $this, 'finalize' ) ) ) );
+
+		// Public, never-cached endpoint that hands out a fresh REST nonce.
+		register_rest_route(
+			PMG_REST_NAMESPACE,
+			'/nonce',
+			array(
+				'methods'             => 'GET',
+				'permission_callback' => '__return_true',
+				'callback'            => array( $this, 'get_nonce' ),
+			)
+		);
 	}
 
 	/**
-	 * Verify the plugin nonce (works for anonymous visitors too).
+	 * Verify the standard WordPress REST nonce.
+	 *
+	 * Using the `wp_rest` action (sent via the X-WP-Nonce header) keeps logged-in
+	 * users authenticated — core would otherwise downgrade them to user 0 and break
+	 * a custom nonce — while still protecting anonymous requests from CSRF.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return bool
 	 */
 	public function check_nonce( WP_REST_Request $request ) {
-		$nonce = $request->get_header( 'x_pmg_nonce' );
+		$nonce = $request->get_header( 'x_wp_nonce' );
 		if ( ! $nonce ) {
-			$nonce = (string) $request->get_param( 'nonce' );
+			$nonce = (string) $request->get_param( '_wpnonce' );
 		}
-		return false !== wp_verify_nonce( $nonce, 'pmg_nonce' );
+		return false !== wp_verify_nonce( $nonce, 'wp_rest' );
+	}
+
+	/**
+	 * Return a fresh REST nonce for the current visitor (cache-proof).
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function get_nonce() {
+		$response = new WP_REST_Response( array( 'nonce' => wp_create_nonce( 'wp_rest' ) ), 200 );
+		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+		return $response;
 	}
 
 	/* --------------------------------------------------------------------- */
@@ -74,6 +100,16 @@ class PMG_Rest {
 	public function generate( WP_REST_Request $request ) {
 		if ( ! PMG_Settings::is_configured() ) {
 			return new WP_Error( 'pmg_not_configured', __( 'The mockup service is not configured yet.', 'pillow-mockup-generator' ), array( 'status' => 503 ) );
+		}
+
+		if ( $this->rate_limited() ) {
+			return new WP_REST_Response(
+				array(
+					'code'    => 'rate_limited',
+					'message' => __( 'Daily limit reached on this connection. Please try again tomorrow.', 'pillow-mockup-generator' ),
+				),
+				429
+			);
 		}
 
 		$session = $this->resolve_session( $request->get_param( 'session' ) );
@@ -114,6 +150,8 @@ class PMG_Rest {
 		if ( is_wp_error( $source ) ) {
 			return $this->error_response( $source );
 		}
+
+		$this->bump_rate();
 
 		$result = PMG_Generator::generate_mockup( $session, $source['data_url'], $lead ? (int) $lead['id'] : 0 );
 		if ( is_wp_error( $result ) ) {
@@ -425,6 +463,43 @@ class PMG_Rest {
 	protected function client_ip() {
 		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 		return substr( $ip, 0, 64 );
+	}
+
+	/**
+	 * Transient key for the per-IP daily generation counter.
+	 *
+	 * @return string
+	 */
+	protected function rate_key() {
+		return 'pmg_rl_' . md5( $this->client_ip() );
+	}
+
+	/**
+	 * Whether the current IP has reached its daily generation cap.
+	 *
+	 * @return bool
+	 */
+	protected function rate_limited() {
+		$cap = (int) PMG_Settings::get( 'rate_limit_per_ip', 40 );
+		if ( $cap <= 0 ) {
+			return false;
+		}
+		return (int) get_transient( $this->rate_key() ) >= $cap;
+	}
+
+	/**
+	 * Increment the per-IP daily generation counter.
+	 *
+	 * @return void
+	 */
+	protected function bump_rate() {
+		$cap = (int) PMG_Settings::get( 'rate_limit_per_ip', 40 );
+		if ( $cap <= 0 ) {
+			return;
+		}
+		$key   = $this->rate_key();
+		$count = (int) get_transient( $key );
+		set_transient( $key, $count + 1, DAY_IN_SECONDS );
 	}
 
 	/**
