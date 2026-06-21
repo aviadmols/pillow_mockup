@@ -1,0 +1,123 @@
+/**
+ * Pillow Mockup Generator — admin styles.
+ */
+
+.pmg-wrap .pmg-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 16px;
+	margin: 20px 0;
+}
+
+.pmg-card {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 18px 20px;
+	background: #fff;
+	border: 1px solid #e2e4e7;
+	border-radius: 8px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.pmg-card-label {
+	font-size: 13px;
+	color: #646970;
+}
+
+.pmg-card-value {
+	font-size: 26px;
+	font-weight: 700;
+	color: #1d2327;
+}
+
+.pmg-table {
+	margin-top: 12px;
+}
+
+.pmg-search {
+	display: flex;
+	gap: 8px;
+	margin: 12px 0;
+}
+
+.pmg-search input[type="search"] {
+	min-width: 280px;
+}
+
+.pmg-status {
+	display: inline-block;
+	padding: 2px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	text-transform: capitalize;
+	background: #f0f0f1;
+	color: #50575e;
+}
+
+.pmg-status-completed {
+	background: #e6f4ea;
+	color: #1e7e44;
+}
+
+.pmg-status-new {
+	background: #fff4e5;
+	color: #b15c00;
+}
+
+.pmg-delete {
+	color: #b32d2e !important;
+}
+
+.pmg-images {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+	margin-top: 12px;
+}
+
+.pmg-image {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	width: 260px;
+}
+
+.pmg-image-caption {
+	font-size: 13px;
+	font-weight: 600;
+	color: #50575e;
+}
+
+.pmg-image img {
+	max-width: 100%;
+	height: auto;
+	border: 1px solid #e2e4e7;
+	border-radius: 8px;
+	background:
+		linear-gradient(45deg, #f0f0f1 25%, transparent 25%, transparent 75%, #f0f0f1 75%),
+		linear-gradient(45deg, #f0f0f1 25%, transparent 25%, transparent 75%, #f0f0f1 75%);
+	background-size: 18px 18px;
+	background-position: 0 0, 9px 9px;
+}
+
+.pmg-image-missing {
+	color: #a7aaad;
+	font-style: italic;
+}
+
+.pmg-detail-table {
+	max-width: 560px;
+	margin-top: 12px;
+}
+
+.pmg-detail-table th {
+	width: 160px;
+	text-align: start;
+}
+
+.pmg-hint {
+	margin-top: 24px;
+	color: #646970;
+}

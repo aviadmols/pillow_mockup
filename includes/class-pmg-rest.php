@@ -1,0 +1,447 @@
+<?php
+/**
+ * REST API: the three front-end actions (generate, lead, finalize) plus gating logic.
+ *
+ * @package PillowMockupGenerator
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Class PMG_Rest
+ */
+class PMG_Rest {
+
+	/**
+	 * Transient prefix for per-session working state.
+	 */
+	const WORK_PREFIX = 'pmg_work_';
+
+	/**
+	 * Max accepted base64 upload length (~10 MB encoded).
+	 */
+	const MAX_UPLOAD_BYTES = 10485760;
+
+	/**
+	 * Register hooks.
+	 *
+	 * @return void
+	 */
+	public function register() {
+		add_action( 'rest_api_init', array( $this, 'routes' ) );
+	}
+
+	/**
+	 * Register REST routes.
+	 *
+	 * @return void
+	 */
+	public function routes() {
+		$args = array(
+			'methods'             => 'POST',
+			'permission_callback' => array( $this, 'check_nonce' ),
+		);
+
+		register_rest_route( PMG_REST_NAMESPACE, '/generate', array_merge( $args, array( 'callback' => array( $this, 'generate' ) ) ) );
+		register_rest_route( PMG_REST_NAMESPACE, '/lead', array_merge( $args, array( 'callback' => array( $this, 'lead' ) ) ) );
+		register_rest_route( PMG_REST_NAMESPACE, '/finalize', array_merge( $args, array( 'callback' => array( $this, 'finalize' ) ) ) );
+	}
+
+	/**
+	 * Verify the plugin nonce (works for anonymous visitors too).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return bool
+	 */
+	public function check_nonce( WP_REST_Request $request ) {
+		$nonce = $request->get_header( 'x_pmg_nonce' );
+		if ( ! $nonce ) {
+			$nonce = (string) $request->get_param( 'nonce' );
+		}
+		return false !== wp_verify_nonce( $nonce, 'pmg_nonce' );
+	}
+
+	/* --------------------------------------------------------------------- */
+	/* Endpoints                                                              */
+	/* --------------------------------------------------------------------- */
+
+	/**
+	 * Generate (or regenerate) a mockup, enforcing the free-first / details-gate rules.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function generate( WP_REST_Request $request ) {
+		if ( ! PMG_Settings::is_configured() ) {
+			return new WP_Error( 'pmg_not_configured', __( 'The mockup service is not configured yet.', 'pillow-mockup-generator' ), array( 'status' => 503 ) );
+		}
+
+		$session = $this->resolve_session( $request->get_param( 'session' ) );
+		$image   = (string) $request->get_param( 'image' );
+		$lead    = PMG_Leads::get_by_session( $session );
+		$has_lead = $lead && is_email( $lead['email'] );
+
+		$max_attempts = (int) PMG_Settings::get( 'max_attempts', 5 );
+		$done_mockups = PMG_Leads::count_generations( $session, 'mockup', 'success' );
+
+		// Gating: first mockup is free; any further generation needs captured details.
+		if ( $done_mockups >= 1 ) {
+			if ( ! $has_lead ) {
+				return new WP_REST_Response(
+					array(
+						'code'    => 'need_details',
+						'session' => $session,
+						'message' => __( 'Please add your details to keep designing.', 'pillow-mockup-generator' ),
+					),
+					403
+				);
+			}
+			if ( $done_mockups >= ( 1 + $max_attempts ) ) {
+				return new WP_REST_Response(
+					array(
+						'code'          => 'max_attempts',
+						'session'       => $session,
+						'attempts_left' => 0,
+						'message'       => (string) PMG_Settings::get( 'text_max_reached' ),
+					),
+					429
+				);
+			}
+		}
+
+		// Resolve the reference image (new upload or reuse stored original).
+		$source = $this->resolve_source_image( $request, $session, $lead, $image );
+		if ( is_wp_error( $source ) ) {
+			return $this->error_response( $source );
+		}
+
+		$result = PMG_Generator::generate_mockup( $session, $source['data_url'], $lead ? (int) $lead['id'] : 0 );
+		if ( is_wp_error( $result ) ) {
+			return $this->error_response( $result );
+		}
+
+		// Update working state.
+		$work               = $this->get_work( $session );
+		$work['original_url']  = $source['original_url'];
+		$work['original_path'] = $source['original_path'];
+		$work['mockup_url']    = $result['url'];
+		$work['mockup_path']   = $result['path'];
+		$this->set_work( $session, $work );
+
+		$total_done = $done_mockups + 1;
+
+		if ( $has_lead ) {
+			PMG_Leads::upsert(
+				$session,
+				array(
+					'mockup_image'   => $result['url'],
+					'original_image' => $source['original_url'],
+					'attempts'       => $total_done,
+					'total_cost'     => PMG_Leads::session_cost( $session ),
+				)
+			);
+		}
+
+		$extra_used    = max( 0, $total_done - 1 );
+		$attempts_left = max( 0, $max_attempts - $extra_used );
+
+		return new WP_REST_Response(
+			array(
+				'code'          => 'ok',
+				'session'       => $session,
+				'mockup_url'    => $result['url'],
+				'attempt'       => $total_done,
+				'max_attempts'  => $max_attempts,
+				'attempts_left' => $attempts_left,
+				'has_lead'      => $has_lead,
+				'needs_details' => ! $has_lead,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Capture lead details, store the working images on the lead, and email both parties.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function lead( WP_REST_Request $request ) {
+		$session = $this->resolve_session( $request->get_param( 'session' ) );
+		$name    = sanitize_text_field( (string) $request->get_param( 'name' ) );
+		$phone   = sanitize_text_field( (string) $request->get_param( 'phone' ) );
+		$email   = sanitize_email( (string) $request->get_param( 'email' ) );
+
+		$errors = array();
+		if ( '' === $name ) {
+			$errors['name'] = __( 'Name is required.', 'pillow-mockup-generator' );
+		}
+		if ( '' === $phone ) {
+			$errors['phone'] = __( 'Phone is required.', 'pillow-mockup-generator' );
+		}
+		if ( ! is_email( $email ) ) {
+			$errors['email'] = __( 'A valid email is required.', 'pillow-mockup-generator' );
+		}
+		if ( $errors ) {
+			return new WP_REST_Response(
+				array(
+					'code'    => 'invalid',
+					'errors'  => $errors,
+					'session' => $session,
+				),
+				422
+			);
+		}
+
+		$work        = $this->get_work( $session );
+		$max_attempts = (int) PMG_Settings::get( 'max_attempts', 5 );
+
+		$lead_id = PMG_Leads::upsert(
+			$session,
+			array(
+				'name'           => $name,
+				'phone'          => $phone,
+				'email'          => $email,
+				'status'         => 'new',
+				'attempts'       => PMG_Leads::count_generations( $session, 'mockup', 'success' ),
+				'original_image' => isset( $work['original_url'] ) ? $work['original_url'] : '',
+				'mockup_image'   => isset( $work['mockup_url'] ) ? $work['mockup_url'] : '',
+				'total_cost'     => PMG_Leads::session_cost( $session ),
+				'ip'             => $this->client_ip(),
+			)
+		);
+
+		$this->attach_generations_to_lead( $session, $lead_id );
+
+		$lead = PMG_Leads::get( $lead_id );
+		if ( $lead ) {
+			PMG_Emailer::notify_admin_new_lead( $lead );
+			PMG_Emailer::notify_customer( $lead );
+		}
+
+		$done          = PMG_Leads::count_generations( $session, 'mockup', 'success' );
+		$attempts_left = max( 0, $max_attempts - max( 0, $done - 1 ) );
+
+		return new WP_REST_Response(
+			array(
+				'code'          => 'ok',
+				'session'       => $session,
+				'has_lead'      => true,
+				'attempts_left' => $attempts_left,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Finalize the selection: generate the print-ready cut-out and notify the admin.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function finalize( WP_REST_Request $request ) {
+		$session = $this->resolve_session( $request->get_param( 'session' ) );
+		$lead    = PMG_Leads::get_by_session( $session );
+
+		if ( ! $lead || ! is_email( $lead['email'] ) ) {
+			return new WP_REST_Response(
+				array(
+					'code'    => 'need_details',
+					'session' => $session,
+				),
+				403
+			);
+		}
+
+		$work         = $this->get_work( $session );
+		$cutout_url   = '';
+		$enable_cutout = (int) PMG_Settings::get( 'enable_cutout', 1 );
+
+		if ( $enable_cutout ) {
+			$original_path = $this->resolve_original_path( $session, $lead, $work );
+			if ( $original_path ) {
+				$data_url = PMG_Storage::file_to_data_url( $original_path );
+				if ( ! is_wp_error( $data_url ) ) {
+					$cutout = PMG_Generator::generate_cutout( $session, $data_url, (int) $lead['id'] );
+					if ( ! is_wp_error( $cutout ) ) {
+						$cutout_url = $cutout['url'];
+					}
+				}
+			}
+		}
+
+		PMG_Leads::upsert(
+			$session,
+			array(
+				'status'       => 'completed',
+				'cutout_image' => $cutout_url,
+				'mockup_image' => isset( $work['mockup_url'] ) ? $work['mockup_url'] : $lead['mockup_image'],
+				'total_cost'   => PMG_Leads::session_cost( $session ),
+			)
+		);
+
+		$lead = PMG_Leads::get_by_session( $session );
+		if ( $lead ) {
+			PMG_Emailer::notify_admin_finalized( $lead );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'code'    => 'done',
+				'session' => $session,
+			),
+			200
+		);
+	}
+
+	/* --------------------------------------------------------------------- */
+	/* Helpers                                                                */
+	/* --------------------------------------------------------------------- */
+
+	/**
+	 * Validate / create a session token.
+	 *
+	 * @param mixed $raw Raw session value from client.
+	 * @return string
+	 */
+	protected function resolve_session( $raw ) {
+		$raw = preg_replace( '/[^a-zA-Z0-9]/', '', (string) $raw );
+		if ( strlen( (string) $raw ) >= 16 ) {
+			return substr( $raw, 0, 32 );
+		}
+		return substr( md5( uniqid( 'pmg', true ) . wp_rand() ), 0, 32 );
+	}
+
+	/**
+	 * Resolve the reference image: a freshly uploaded one (saved as original) or the stored original.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @param string          $session Session token.
+	 * @param array|null      $lead    Lead row.
+	 * @param string          $image   Uploaded data URL (may be empty).
+	 * @return array{data_url:string,original_url:string,original_path:string}|WP_Error
+	 */
+	protected function resolve_source_image( WP_REST_Request $request, $session, $lead, $image ) {
+		$image = trim( (string) $image );
+
+		if ( '' !== $image ) {
+			if ( strlen( $image ) > self::MAX_UPLOAD_BYTES ) {
+				return new WP_Error( 'pmg_too_large', __( 'The uploaded image is too large.', 'pillow-mockup-generator' ), array( 'status' => 413 ) );
+			}
+			$saved = PMG_Storage::save_data_url( $image, $session, 'original' );
+			if ( is_wp_error( $saved ) ) {
+				return $saved;
+			}
+			return array(
+				'data_url'      => $image,
+				'original_url'  => $saved['url'],
+				'original_path' => $saved['path'],
+			);
+		}
+
+		// No new image: reuse the stored original (for "try another result").
+		$work          = $this->get_work( $session );
+		$original_path = $this->resolve_original_path( $session, $lead, $work );
+		if ( ! $original_path ) {
+			return new WP_Error( 'pmg_no_image', __( 'Please upload a photo first.', 'pillow-mockup-generator' ), array( 'status' => 400 ) );
+		}
+		$data_url = PMG_Storage::file_to_data_url( $original_path );
+		if ( is_wp_error( $data_url ) ) {
+			return $data_url;
+		}
+
+		$original_url = isset( $work['original_url'] ) ? $work['original_url'] : ( $lead ? $lead['original_image'] : '' );
+
+		return array(
+			'data_url'      => $data_url,
+			'original_url'  => $original_url,
+			'original_path' => $original_path,
+		);
+	}
+
+	/**
+	 * Determine the original image file path from working state or the lead URL.
+	 *
+	 * @param string     $session Session token.
+	 * @param array|null $lead    Lead row.
+	 * @param array      $work    Working state.
+	 * @return string Empty string if not found.
+	 */
+	protected function resolve_original_path( $session, $lead, array $work ) {
+		if ( ! empty( $work['original_path'] ) && file_exists( $work['original_path'] ) ) {
+			return $work['original_path'];
+		}
+		if ( $lead && ! empty( $lead['original_image'] ) ) {
+			$path = PMG_Storage::url_to_path( $lead['original_image'] );
+			if ( $path && file_exists( $path ) ) {
+				return $path;
+			}
+		}
+		return '';
+	}
+
+	/**
+	 * Link unattached generation rows to the lead id.
+	 *
+	 * @param string $session Session token.
+	 * @param int    $lead_id Lead id.
+	 * @return void
+	 */
+	protected function attach_generations_to_lead( $session, $lead_id ) {
+		global $wpdb;
+		$table = PMG_Activator::generations_table();
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare( "UPDATE {$table} SET lead_id = %d WHERE session = %s AND ( lead_id IS NULL OR lead_id = 0 )", absint( $lead_id ), $session ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		);
+	}
+
+	/**
+	 * Read per-session working state.
+	 *
+	 * @param string $session Session token.
+	 * @return array
+	 */
+	protected function get_work( $session ) {
+		$work = get_transient( self::WORK_PREFIX . $session );
+		return is_array( $work ) ? $work : array();
+	}
+
+	/**
+	 * Store per-session working state.
+	 *
+	 * @param string $session Session token.
+	 * @param array  $work    State.
+	 * @return void
+	 */
+	protected function set_work( $session, array $work ) {
+		set_transient( self::WORK_PREFIX . $session, $work, DAY_IN_SECONDS );
+	}
+
+	/**
+	 * Resolve the client IP address.
+	 *
+	 * @return string
+	 */
+	protected function client_ip() {
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		return substr( $ip, 0, 64 );
+	}
+
+	/**
+	 * Convert a WP_Error into a REST response with a sensible status.
+	 *
+	 * @param WP_Error $error Error.
+	 * @return WP_REST_Response
+	 */
+	protected function error_response( WP_Error $error ) {
+		$data   = $error->get_error_data();
+		$status = is_array( $data ) && isset( $data['status'] ) ? (int) $data['status'] : 500;
+		return new WP_REST_Response(
+			array(
+				'code'    => $error->get_error_code(),
+				'message' => $error->get_error_message(),
+			),
+			$status
+		);
+	}
+}
