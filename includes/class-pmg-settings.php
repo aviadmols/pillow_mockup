@@ -65,6 +65,7 @@ class PMG_Settings {
 			'enable_cutout'     => 1,
 			'admin_email'       => get_option( 'admin_email' ),
 			'currency'          => '$',
+			'font_family'       => '',
 			'lottie_url'        => '',
 			'max_upload_px'     => 1280,
 			'site_title'        => get_bloginfo( 'name' ),

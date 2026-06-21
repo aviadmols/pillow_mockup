@@ -11,8 +11,10 @@
 defined( 'ABSPATH' ) || exit;
 
 $pmg_extra_class = isset( $atts['class'] ) ? sanitize_html_class( $atts['class'] ) : '';
+$pmg_font_family = isset( $settings['font_family'] ) ? trim( (string) $settings['font_family'] ) : '';
+$pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family . ';' : '';
 ?>
-<div class="pmg pmg--rtl pmg--loading <?php echo esc_attr( $pmg_extra_class ); ?>" data-pmg data-state="upload" dir="rtl">
+<div class="pmg pmg--rtl pmg--loading <?php echo esc_attr( $pmg_extra_class ); ?>" data-pmg data-state="upload" dir="rtl"<?php echo '' !== $pmg_root_style ? ' style="' . esc_attr( $pmg_root_style ) . '"' : ''; ?>>
 
 	<div class="pmg__boot" aria-hidden="true">
 		<span class="pmg__boot-spinner"></span>

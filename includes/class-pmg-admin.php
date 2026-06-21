@@ -463,6 +463,12 @@ class PMG_Admin {
 						<td><input type="text" id="pmg_currency" name="pmg[currency]" value="<?php echo esc_attr( $s['currency'] ); ?>" class="small-text" /></td>
 					</tr>
 					<tr>
+						<th><label for="pmg_font_family"><?php esc_html_e( 'Font family', 'pillow-mockup-generator' ); ?></label></th>
+						<td><input type="text" id="pmg_font_family" name="pmg[font_family]" value="<?php echo esc_attr( $s['font_family'] ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'e.g. &quot;Heebo&quot;, sans-serif', 'pillow-mockup-generator' ); ?>" />
+							<p class="description"><?php esc_html_e( 'Optional. A CSS font-family applied to the whole widget. Leave empty to inherit the site font.', 'pillow-mockup-generator' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th><label for="pmg_lottie_url"><?php esc_html_e( 'Lottie loader URL', 'pillow-mockup-generator' ); ?></label></th>
 						<td><input type="url" id="pmg_lottie_url" name="pmg[lottie_url]" value="<?php echo esc_attr( $s['lottie_url'] ); ?>" class="regular-text" />
 							<p class="description"><?php esc_html_e( 'A .json Lottie animation URL. Leave empty to use the bundled loader.', 'pillow-mockup-generator' ); ?></p>
