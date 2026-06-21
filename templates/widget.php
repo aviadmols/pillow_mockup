@@ -12,7 +12,11 @@ defined( 'ABSPATH' ) || exit;
 
 $pmg_extra_class = isset( $atts['class'] ) ? sanitize_html_class( $atts['class'] ) : '';
 ?>
-<div class="pmg pmg--rtl <?php echo esc_attr( $pmg_extra_class ); ?>" data-pmg data-state="upload" dir="rtl">
+<div class="pmg pmg--rtl pmg--loading <?php echo esc_attr( $pmg_extra_class ); ?>" data-pmg data-state="upload" dir="rtl">
+
+	<div class="pmg__boot" aria-hidden="true">
+		<span class="pmg__boot-spinner"></span>
+	</div>
 
 	<header class="pmg__head">
 		<h2 class="pmg__title"><?php echo esc_html( $settings['text_heading'] ); ?></h2>

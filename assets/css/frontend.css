@@ -32,6 +32,36 @@
 	box-sizing: border-box;
 }
 
+/* Initial boot loader (prevents a layout jump before the widget is ready) */
+.pmg__boot {
+	display: none;
+}
+
+.pmg--loading .pmg__boot {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 360px;
+}
+
+.pmg--loading .pmg__head,
+.pmg--loading .pmg__stage {
+	display: none;
+}
+
+.pmg__boot-spinner {
+	width: 34px;
+	height: 34px;
+	border: 3px solid var(--pmg-rule);
+	border-top-color: var(--pmg-accent);
+	border-radius: 50%;
+	animation: pmg-spin 0.9s linear infinite;
+}
+
+.pmg:not(.pmg--loading) .pmg__head {
+	animation: pmg-fade 0.4s ease both;
+}
+
 /* Header */
 .pmg__head {
 	margin-block-end: clamp(20px, 4vw, 40px);
@@ -373,7 +403,7 @@
 	display: inline-block;
 	max-width: 100%;
 	margin: 0 auto;
-	padding: clamp(14px, 3vw, 28px);
+	padding: 0;
 	background: var(--pmg-paper);
 	border-radius: var(--pmg-radius);
 	box-shadow: var(--pmg-shadow);

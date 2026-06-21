@@ -5,6 +5,19 @@
 (function () {
 	'use strict';
 
+	// Reveal widgets once the DOM is parsed so visitors never see a layout jump.
+	function revealWidgets() {
+		var loading = document.querySelectorAll('.pmg--loading');
+		Array.prototype.forEach.call(loading, function (el) {
+			el.classList.remove('pmg--loading');
+		});
+	}
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', revealWidgets);
+	} else {
+		revealWidgets();
+	}
+
 	if (typeof window.PMG_CONFIG === 'undefined') {
 		return;
 	}
