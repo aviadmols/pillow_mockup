@@ -97,6 +97,7 @@ class PMG_Generator {
 				'prompt_tokens'     => $result['prompt_tokens'],
 				'completion_tokens' => $result['completion_tokens'],
 				'generation_id'     => $result['generation_id'],
+				'image_url'         => $saved['url'],
 				'status'            => 'success',
 			)
 		);

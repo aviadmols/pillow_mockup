@@ -59,19 +59,14 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 				</button>
 			</figure>
 
+			<div class="pmg__gallery" data-pmg-gallery hidden></div>
+
 			<div class="pmg__toolbar" data-pmg-toolbar>
 				<button type="button" class="pmg__tool" data-pmg-action="change">
 					<span class="pmg__tool-icon" aria-hidden="true">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>
 					</span>
 					<span class="pmg__tool-label"><?php echo esc_html( $settings['text_change_photo'] ); ?></span>
-				</button>
-				<button type="button" class="pmg__tool" data-pmg-action="retry">
-					<span class="pmg__tool-icon" aria-hidden="true">
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
-					</span>
-					<span class="pmg__tool-label"><?php echo esc_html( $settings['text_try_again'] ); ?></span>
-					<span class="pmg__attempts" data-pmg-attempts hidden></span>
 				</button>
 				<button type="button" class="pmg__btn pmg__btn--primary pmg__tool--cta" data-pmg-action="love">
 					<?php echo esc_html( $settings['text_continue'] ); ?>
@@ -124,7 +119,7 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 				</div>
 
 				<div class="pmg__form-actions">
-					<button type="button" class="pmg__btn pmg__btn--ghost" data-pmg-action="back-to-preview"><?php esc_html_e( 'Back', 'pillow-mockup-generator' ); ?></button>
+					<button type="button" class="pmg__btn pmg__btn--ghost" data-pmg-action="back-to-preview"><?php esc_html_e( 'חזרה', 'pillow-mockup-generator' ); ?></button>
 					<button type="submit" class="pmg__btn pmg__btn--primary" data-pmg-submit><?php echo esc_html( $settings['text_submit'] ); ?></button>
 				</div>
 

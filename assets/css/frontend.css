@@ -531,6 +531,44 @@
 }
 
 /* Toolbar (floating action card) */
+/* Gallery of generated mockups (choose your favourite) */
+.pmg__gallery {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 10px;
+	margin-block-start: clamp(16px, 3vw, 24px);
+}
+
+.pmg__thumb {
+	width: 72px;
+	height: 72px;
+	padding: 0;
+	border: 2px solid var(--pmg-rule);
+	border-radius: 12px;
+	background: var(--pmg-paper);
+	cursor: pointer;
+	overflow: hidden;
+	transition: var(--pmg-transition);
+}
+
+.pmg__thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.pmg__thumb:hover {
+	border-color: var(--pmg-muted);
+	transform: translateY(-2px);
+}
+
+.pmg__thumb.is-selected {
+	border-color: var(--pmg-accent);
+	box-shadow: rgb(255 46 116 / 22%) 0 0 0 3px;
+}
+
 .pmg__toolbar {
 	position: sticky;
 	bottom: 16px;
@@ -915,5 +953,14 @@
 
 .pmg.pmg .pmg__input:focus {
 	background: var(--pmg-paper);
+	border-color: var(--pmg-accent);
+}
+
+.pmg.pmg .pmg__thumb {
+	background: var(--pmg-paper);
+	border: 2px solid var(--pmg-rule);
+}
+
+.pmg.pmg .pmg__thumb.is-selected {
 	border-color: var(--pmg-accent);
 }

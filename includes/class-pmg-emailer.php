@@ -63,6 +63,23 @@ class PMG_Emailer {
 	}
 
 	/**
+	 * Notify the admin that a customer placed an order (finalized their choice).
+	 * Sent immediately on finalize; the print-ready cut-out is produced later.
+	 *
+	 * @param array $lead Lead row.
+	 * @return bool
+	 */
+	public static function notify_admin_order( array $lead ) {
+		$subject = sprintf(
+			/* translators: %s: customer name. */
+			__( 'New pillow order — %s', 'pillow-mockup-generator' ),
+			$lead['name'] ? $lead['name'] : $lead['email']
+		);
+		$body = self::lead_html( $lead, __( 'A customer placed an order and selected their final design.', 'pillow-mockup-generator' ) );
+		return wp_mail( self::admin_recipient(), $subject, $body, self::headers() );
+	}
+
+	/**
 	 * Send the customer confirmation email.
 	 *
 	 * @param array $lead Lead row.

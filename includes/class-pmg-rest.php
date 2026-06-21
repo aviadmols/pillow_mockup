@@ -43,6 +43,7 @@ class PMG_Rest {
 		);
 
 		register_rest_route( PMG_REST_NAMESPACE, '/generate', array_merge( $args, array( 'callback' => array( $this, 'generate' ) ) ) );
+		register_rest_route( PMG_REST_NAMESPACE, '/state', array_merge( $args, array( 'callback' => array( $this, 'state' ) ) ) );
 		register_rest_route( PMG_REST_NAMESPACE, '/lead', array_merge( $args, array( 'callback' => array( $this, 'lead' ) ) ) );
 		register_rest_route( PMG_REST_NAMESPACE, '/finalize', array_merge( $args, array( 'callback' => array( $this, 'finalize' ) ) ) );
 
@@ -188,11 +189,52 @@ class PMG_Rest {
 				'code'          => 'ok',
 				'session'       => $session,
 				'mockup_url'    => $result['url'],
+				'mockups'       => PMG_Leads::session_mockups( $session ),
+				'selected'      => $result['url'],
 				'attempt'       => $total_done,
 				'max_attempts'  => $max_attempts,
 				'attempts_left' => $attempts_left,
 				'has_lead'      => $has_lead,
 				'needs_details' => ! $has_lead,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Return the current saved state for a returning visitor (their generated
+	 * mockups, selection, lead and order status). Read-only.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function state( WP_REST_Request $request ) {
+		$session = $this->resolve_session( $request->get_param( 'session' ) );
+		$mockups = PMG_Leads::session_mockups( $session );
+		$lead    = PMG_Leads::get_by_session( $session );
+		$has_lead = $lead && is_email( $lead['email'] );
+
+		$max_attempts = (int) PMG_Settings::get( 'max_attempts', 5 );
+		$done_mockups = PMG_Leads::count_generations( $session, 'mockup', 'success' );
+		$attempts_left = max( 0, $max_attempts - max( 0, $done_mockups - 1 ) );
+
+		// Prefer the explicitly selected/saved mockup, else the latest one.
+		$selected = '';
+		if ( $lead && ! empty( $lead['mockup_image'] ) && in_array( $lead['mockup_image'], $mockups, true ) ) {
+			$selected = $lead['mockup_image'];
+		} elseif ( $mockups ) {
+			$selected = $mockups[ count( $mockups ) - 1 ];
+		}
+
+		return new WP_REST_Response(
+			array(
+				'code'          => 'ok',
+				'session'       => $session,
+				'mockups'       => $mockups,
+				'selected'      => $selected,
+				'has_lead'      => $has_lead,
+				'status'        => $lead ? (string) $lead['status'] : '',
+				'attempts_left' => $attempts_left,
 			),
 			200
 		);
@@ -261,11 +303,8 @@ class PMG_Rest {
 
 		$this->attach_generations_to_lead( $session, $lead_id );
 
-		$lead = PMG_Leads::get( $lead_id );
-		if ( $lead ) {
-			PMG_Emailer::notify_admin_new_lead( $lead );
-			PMG_Emailer::notify_customer( $lead );
-		}
+		// No emails are sent at this step — both the customer confirmation and the
+		// admin notification are sent only once the order is finalized.
 
 		$done          = PMG_Leads::count_generations( $session, 'mockup', 'success' );
 		$attempts_left = max( 0, $max_attempts - max( 0, $done - 1 ) );
@@ -282,7 +321,11 @@ class PMG_Rest {
 	}
 
 	/**
-	 * Finalize the selection: generate the print-ready cut-out and notify the admin.
+	 * Finalize the selection: record the order and notify both parties immediately.
+	 *
+	 * The print-ready cut-out is intentionally NOT generated here — it is produced
+	 * on demand from the admin order screen — so the visitor gets an instant
+	 * confirmation without waiting on a second AI render.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response|WP_Error
@@ -301,36 +344,27 @@ class PMG_Rest {
 			);
 		}
 
-		$work         = $this->get_work( $session );
-		$cutout_url   = '';
-		$enable_cutout = (int) PMG_Settings::get( 'enable_cutout', 1 );
-
-		if ( $enable_cutout ) {
-			$original_path = $this->resolve_original_path( $session, $lead, $work );
-			if ( $original_path ) {
-				$data_url = PMG_Storage::file_to_data_url( $original_path );
-				if ( ! is_wp_error( $data_url ) ) {
-					$cutout = PMG_Generator::generate_cutout( $session, $data_url, (int) $lead['id'] );
-					if ( ! is_wp_error( $cutout ) ) {
-						$cutout_url = $cutout['url'];
-					}
-				}
-			}
+		// Resolve which mockup the visitor chose (validated against this session).
+		$work     = $this->get_work( $session );
+		$mockups  = PMG_Leads::session_mockups( $session );
+		$selected = esc_url_raw( (string) $request->get_param( 'mockup' ) );
+		if ( '' === $selected || ! in_array( $selected, $mockups, true ) ) {
+			$selected = isset( $work['mockup_url'] ) && $work['mockup_url'] ? $work['mockup_url'] : $lead['mockup_image'];
 		}
 
 		PMG_Leads::upsert(
 			$session,
 			array(
 				'status'       => 'completed',
-				'cutout_image' => $cutout_url,
-				'mockup_image' => isset( $work['mockup_url'] ) ? $work['mockup_url'] : $lead['mockup_image'],
+				'mockup_image' => $selected,
 				'total_cost'   => PMG_Leads::session_cost( $session ),
 			)
 		);
 
 		$lead = PMG_Leads::get_by_session( $session );
 		if ( $lead ) {
-			PMG_Emailer::notify_admin_finalized( $lead );
+			PMG_Emailer::notify_customer( $lead );
+			PMG_Emailer::notify_admin_order( $lead );
 		}
 
 		return new WP_REST_Response(

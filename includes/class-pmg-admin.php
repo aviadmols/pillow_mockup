@@ -118,6 +118,57 @@ class PMG_Admin {
 			PMG_Leads::delete( $lead_id );
 			$this->redirect_with( 'pmg-registrants', array( 'pmg_notice' => 'deleted' ) );
 		}
+
+		// Generate the print-ready cut-out for an order, on demand.
+		if ( isset( $_GET['pmg_action'] ) && 'generate_cutout' === $_GET['pmg_action'] && isset( $_GET['lead'] ) ) {
+			$lead_id = absint( $_GET['lead'] );
+			check_admin_referer( 'pmg_cutout_' . $lead_id );
+			$ok = $this->generate_cutout_for_lead( $lead_id );
+			$this->redirect_with(
+				'pmg-registrants',
+				array(
+					'lead'       => $lead_id,
+					'pmg_notice' => $ok ? 'cutout_ok' : 'cutout_err',
+				)
+			);
+		}
+	}
+
+	/**
+	 * Generate the print-ready cut-out for a single lead from its original photo.
+	 *
+	 * @param int $lead_id Lead id.
+	 * @return bool True on success.
+	 */
+	protected function generate_cutout_for_lead( $lead_id ) {
+		$lead = PMG_Leads::get( $lead_id );
+		if ( ! $lead || empty( $lead['original_image'] ) ) {
+			return false;
+		}
+
+		$path = PMG_Storage::url_to_path( $lead['original_image'] );
+		if ( ! $path || ! file_exists( $path ) ) {
+			return false;
+		}
+
+		$data_url = PMG_Storage::file_to_data_url( $path );
+		if ( is_wp_error( $data_url ) ) {
+			return false;
+		}
+
+		$cutout = PMG_Generator::generate_cutout( $lead['session'], $data_url, (int) $lead['id'] );
+		if ( is_wp_error( $cutout ) ) {
+			return false;
+		}
+
+		PMG_Leads::upsert(
+			$lead['session'],
+			array(
+				'cutout_image' => $cutout['url'],
+				'total_cost'   => PMG_Leads::session_cost( $lead['session'] ),
+			)
+		);
+		return true;
 	}
 
 	/**
@@ -345,6 +396,29 @@ class PMG_Admin {
 					</div>
 				<?php endforeach; ?>
 			</div>
+
+			<?php
+			$cutout_url = wp_nonce_url(
+				add_query_arg(
+					array( 'page' => 'pmg-registrants', 'pmg_action' => 'generate_cutout', 'lead' => $lead['id'] ),
+					admin_url( 'admin.php' )
+				),
+				'pmg_cutout_' . $lead['id']
+			);
+			$has_original = ! empty( $lead['original_image'] );
+			$has_cutout   = ! empty( $lead['cutout_image'] );
+			?>
+			<h2><?php esc_html_e( 'Print-ready cut-out', 'pillow-mockup-generator' ); ?></h2>
+			<p>
+				<?php if ( $has_original ) : ?>
+					<a class="button button-primary" href="<?php echo esc_url( $cutout_url ); ?>">
+						<?php echo $has_cutout ? esc_html__( 'Regenerate cut-out', 'pillow-mockup-generator' ) : esc_html__( 'Generate cut-out', 'pillow-mockup-generator' ); ?>
+					</a>
+					<span class="description" style="margin-inline-start:8px;"><?php esc_html_e( 'Renders the print-ready die-cut shape from the original photo (may take a few seconds).', 'pillow-mockup-generator' ); ?></span>
+				<?php else : ?>
+					<span class="pmg-image-missing"><?php esc_html_e( 'No original photo on file to generate a cut-out from.', 'pillow-mockup-generator' ); ?></span>
+				<?php endif; ?>
+			</p>
 		</div>
 		<?php
 	}
@@ -413,7 +487,8 @@ class PMG_Admin {
 					<tr>
 						<th><?php esc_html_e( 'Print-ready cut-out', 'pillow-mockup-generator' ); ?></th>
 						<td>
-							<label><input type="checkbox" name="pmg[enable_cutout]" value="1" <?php checked( 1, (int) $s['enable_cutout'] ); ?> /> <?php esc_html_e( 'Generate the print-ready cut-out when a visitor finalizes their choice.', 'pillow-mockup-generator' ); ?></label>
+							<label><input type="checkbox" name="pmg[enable_cutout]" value="1" <?php checked( 1, (int) $s['enable_cutout'] ); ?> /> <?php esc_html_e( 'Offer print-ready cut-out generation for orders.', 'pillow-mockup-generator' ); ?></label>
+							<p class="description"><?php esc_html_e( 'The cut-out is generated on demand from the order screen (Registrants → open an order → Generate cut-out), so customers get an instant confirmation.', 'pillow-mockup-generator' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -480,7 +555,6 @@ class PMG_Admin {
 						'text_subheading'    => __( 'Sub-heading', 'pillow-mockup-generator' ),
 						'text_upload'        => __( 'Upload button', 'pillow-mockup-generator' ),
 						'text_generating'    => __( 'Generating text', 'pillow-mockup-generator' ),
-						'text_try_again'     => __( 'Try-again label', 'pillow-mockup-generator' ),
 						'text_change_photo'  => __( 'Change-photo label', 'pillow-mockup-generator' ),
 						'text_continue'      => __( '"I love it" label', 'pillow-mockup-generator' ),
 						'text_finalize'      => __( 'Finalize label', 'pillow-mockup-generator' ),
@@ -492,7 +566,6 @@ class PMG_Admin {
 						'text_phone'         => __( 'Phone field label', 'pillow-mockup-generator' ),
 						'text_email'         => __( 'Email field label', 'pillow-mockup-generator' ),
 						'text_submit'        => __( 'Details submit label', 'pillow-mockup-generator' ),
-						'text_attempts_left' => __( '"attempts left" label', 'pillow-mockup-generator' ),
 						'text_max_reached'   => __( 'Max-tries message', 'pillow-mockup-generator' ),
 						'text_done_title'    => __( 'Thank-you title', 'pillow-mockup-generator' ),
 						'text_done_message'  => __( 'Thank-you message', 'pillow-mockup-generator' ),
@@ -569,6 +642,10 @@ class PMG_Admin {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Registrant deleted.', 'pillow-mockup-generator' ) . '</p></div>';
 		} elseif ( 'models' === $notice ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Model list updated.', 'pillow-mockup-generator' ) . '</p></div>';
+		} elseif ( 'cutout_ok' === $notice ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Print-ready cut-out generated.', 'pillow-mockup-generator' ) . '</p></div>';
+		} elseif ( 'cutout_err' === $notice ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Could not generate the cut-out. Check the original photo and your API settings.', 'pillow-mockup-generator' ) . '</p></div>';
 		} elseif ( 'tested' === $notice ) {
 			$result = get_transient( 'pmg_test_result' );
 			delete_transient( 'pmg_test_result' );

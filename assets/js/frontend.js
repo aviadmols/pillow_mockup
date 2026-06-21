@@ -142,7 +142,9 @@
 			attemptsLeft: 0,
 			hasLead: false,
 			pending: null,
-			image: ''
+			image: '',
+			mockups: [],
+			selectedUrl: ''
 		};
 		this.lottie = null;
 
@@ -156,8 +158,7 @@
 			result: root.querySelector('[data-pmg-result]'),
 			lottie: root.querySelector('[data-pmg-lottie]'),
 			loadingText: root.querySelector('[data-pmg-loading-text]'),
-			attempts: root.querySelector('[data-pmg-attempts]'),
-			retryBtn: root.querySelector('[data-pmg-action="retry"]'),
+			gallery: root.querySelector('[data-pmg-gallery]'),
 			previewNotice: root.querySelector('[data-pmg-preview-notice]'),
 			form: root.querySelector('[data-pmg-form]'),
 			formNotice: root.querySelector('[data-pmg-form-notice]')
@@ -165,6 +166,26 @@
 
 		this.bind();
 	}
+
+	var SESSION_KEY = 'pmg_session';
+
+	function storedSession() {
+		try {
+			return window.localStorage.getItem(SESSION_KEY) || '';
+		} catch (e) {
+			return '';
+		}
+	}
+
+	Widget.prototype.setSession = function (session) {
+		if (!session) {
+			return;
+		}
+		this.state.session = session;
+		try {
+			window.localStorage.setItem(SESSION_KEY, session);
+		} catch (e) {}
+	};
 
 	Widget.prototype.setState = function (state) {
 		this.root.setAttribute('data-state', state);
@@ -399,13 +420,6 @@
 					this.els.file && this.els.file.click();
 				}
 				break;
-			case 'retry':
-				if (!this.state.hasLead) {
-					this.openDetails('retry');
-				} else if (this.state.attemptsLeft > 0) {
-					this.generate(null);
-				}
-				break;
 			case 'love':
 				if (!this.state.hasLead) {
 					this.openDetails('love');
@@ -455,11 +469,11 @@
 			self.busy(false);
 			var d = res.data;
 			if (d.session) {
-				self.state.session = d.session;
+				self.setSession(d.session);
 			}
 
 			if (res.status === 403 && d.code === 'need_details') {
-				self.openDetails(self.state.pending || 'retry');
+				self.openDetails(self.state.pending || 'change');
 				return;
 			}
 			if (res.status === 429 || d.code === 'max_attempts') {
@@ -476,8 +490,9 @@
 
 			self.state.hasLead = !!d.has_lead;
 			self.state.attemptsLeft = typeof d.attempts_left === 'number' ? d.attempts_left : self.state.attemptsLeft;
-			if (d.mockup_url) {
-				self.els.result.src = d.mockup_url;
+			self.setMockups(d.mockups, d.selected || d.mockup_url);
+			if (self.state.selectedUrl) {
+				self.els.result.src = self.state.selectedUrl;
 			}
 			self.showResult();
 			self.updateToolbar();
@@ -493,18 +508,67 @@
 	};
 
 	Widget.prototype.updateToolbar = function () {
-		var s = this.state;
-		if (this.els.retryBtn) {
-			var noTries = s.hasLead && s.attemptsLeft <= 0;
-			this.els.retryBtn.disabled = noTries;
+		this.renderGallery();
+	};
+
+	/**
+	 * Select a generated mockup as the active/preview image.
+	 */
+	Widget.prototype.selectMockup = function (url) {
+		if (!url) {
+			return;
 		}
-		if (this.els.attempts) {
-			if (s.hasLead) {
-				this.els.attempts.hidden = false;
-				this.els.attempts.textContent = s.attemptsLeft + ' ' + (CFG.attemptsLabel || '');
-			} else {
-				this.els.attempts.hidden = true;
-			}
+		this.state.selectedUrl = url;
+		if (this.els.result) {
+			this.els.result.src = url;
+		}
+		this.renderGallery();
+	};
+
+	/**
+	 * Render the bottom gallery of all mockups generated this session.
+	 */
+	Widget.prototype.renderGallery = function () {
+		var self = this;
+		var gallery = this.els.gallery;
+		if (!gallery) {
+			return;
+		}
+		var mockups = this.state.mockups || [];
+		gallery.innerHTML = '';
+		// Only show the gallery when there is more than one option to choose from.
+		if (mockups.length < 2) {
+			gallery.hidden = true;
+			return;
+		}
+		gallery.hidden = false;
+		mockups.forEach(function (url) {
+			var btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'pmg__thumb' + (url === self.state.selectedUrl ? ' is-selected' : '');
+			var img = document.createElement('img');
+			img.src = url;
+			img.alt = '';
+			img.loading = 'lazy';
+			btn.appendChild(img);
+			btn.addEventListener('click', function () {
+				self.selectMockup(url);
+			});
+			gallery.appendChild(btn);
+		});
+	};
+
+	/**
+	 * Merge a newly generated mockup URL into the session list (newest last).
+	 */
+	Widget.prototype.setMockups = function (list, selected) {
+		if (Array.isArray(list)) {
+			this.state.mockups = list.filter(function (u) { return !!u; });
+		}
+		if (selected) {
+			this.state.selectedUrl = selected;
+		} else if (!this.state.selectedUrl && this.state.mockups.length) {
+			this.state.selectedUrl = this.state.mockups[this.state.mockups.length - 1];
 		}
 	};
 
@@ -566,7 +630,7 @@
 			self.busy(false);
 			var d = res.data;
 			if (d.session) {
-				self.state.session = d.session;
+				self.setSession(d.session);
 			}
 			if (res.status === 422 && d.errors) {
 				Object.keys(d.errors).forEach(function (f) {
@@ -587,8 +651,6 @@
 
 			if (pending === 'love') {
 				self.finalize();
-			} else if (pending === 'retry') {
-				self.generate(null);
 			} else if (pending === 'change') {
 				self.setState('preview');
 				self.updateToolbar();
@@ -608,9 +670,12 @@
 		this.setState('loading');
 		this.busy(true);
 
-		api('finalize', { session: this.state.session }).then(function (res) {
+		api('finalize', { session: this.state.session, mockup: this.state.selectedUrl }).then(function (res) {
 			self.busy(false);
 			var d = res.data;
+			if (d.session) {
+				self.setSession(d.session);
+			}
 			if (res.status === 403 && d.code === 'need_details') {
 				self.openDetails('love');
 				return;
@@ -626,6 +691,43 @@
 		});
 	};
 
+	/**
+	 * Restore a returning visitor's session: show their previously generated
+	 * mockups (and selection) so they don't have to start over.
+	 */
+	Widget.prototype.restore = function () {
+		var self = this;
+		var session = storedSession();
+		if (!session) {
+			return;
+		}
+		this.state.session = session;
+		api('state', { session: session }).then(function (res) {
+			var d = res.data || {};
+			if (!res.ok || d.code !== 'ok') {
+				return;
+			}
+			if (d.session) {
+				self.setSession(d.session);
+			}
+			self.state.hasLead = !!d.has_lead;
+			self.state.attemptsLeft = typeof d.attempts_left === 'number' ? d.attempts_left : 0;
+			if (!d.mockups || !d.mockups.length) {
+				return;
+			}
+			self.setMockups(d.mockups, d.selected);
+			if (self.state.selectedUrl && self.els.result) {
+				self.els.result.src = self.state.selectedUrl;
+			}
+			if (d.status === 'completed') {
+				self.setState('done');
+			} else {
+				self.showResult();
+			}
+			self.updateToolbar();
+		}).catch(function () {});
+	};
+
 	// Boot all widgets on the page.
 	document.addEventListener('DOMContentLoaded', function () {
 		var roots = document.querySelectorAll('[data-pmg]');
@@ -633,9 +735,11 @@
 			return;
 		}
 		// Pull a live nonce up front so the first action works on cached pages.
-		refreshNonce();
-		Array.prototype.forEach.call(roots, function (root) {
-			new Widget(root);
+		refreshNonce().then(function () {
+			Array.prototype.forEach.call(roots, function (root) {
+				var widget = new Widget(root);
+				widget.restore();
+			});
 		});
 	});
 })();

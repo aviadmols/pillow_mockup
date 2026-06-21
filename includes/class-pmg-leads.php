@@ -183,6 +183,7 @@ class PMG_Leads {
 			'completion_tokens' => isset( $data['completion_tokens'] ) ? absint( $data['completion_tokens'] ) : 0,
 			'status'            => isset( $data['status'] ) ? (string) $data['status'] : 'success',
 			'generation_id'     => isset( $data['generation_id'] ) ? (string) $data['generation_id'] : '',
+			'image_url'         => isset( $data['image_url'] ) ? esc_url_raw( (string) $data['image_url'] ) : '',
 			'created_at'        => self::now(),
 		);
 
@@ -213,6 +214,26 @@ class PMG_Leads {
 			$params[] = $status;
 		}
 		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $params ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQL.NotPrepared
+	}
+
+	/**
+	 * List all successfully generated mockup image URLs for a session, oldest first.
+	 *
+	 * @param string $session Session token.
+	 * @return string[] Ordered list of public image URLs.
+	 */
+	public static function session_mockups( $session ) {
+		global $wpdb;
+		$table = PMG_Activator::generations_table();
+		$urls  = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT image_url FROM {$table} WHERE session = %s AND type = %s AND status = %s AND image_url <> '' ORDER BY id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$session,
+				'mockup',
+				'success'
+			)
+		);
+		return is_array( $urls ) ? array_values( array_filter( $urls ) ) : array();
 	}
 
 	/**
