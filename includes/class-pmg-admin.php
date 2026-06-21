@@ -388,15 +388,15 @@ class PMG_Admin {
 					<tr>
 						<th><label for="pmg_model"><?php esc_html_e( 'Mockup model', 'pillow-mockup-generator' ); ?></label></th>
 						<td>
-							<input type="text" id="pmg_model" name="pmg[model]" value="<?php echo esc_attr( $s['model'] ); ?>" class="regular-text" list="pmg-models-list" />
-							<p class="description"><?php esc_html_e( 'An image-output model, e.g. google/gemini-2.5-flash-image.', 'pillow-mockup-generator' ); ?></p>
+							<?php $this->model_select( 'model', $s['model'], false, '' ); ?>
+							<p class="description"><?php esc_html_e( 'Choose a Nano Banana model, or pick "Other" to enter any OpenRouter image model.', 'pillow-mockup-generator' ); ?></p>
 						</td>
 					</tr>
 					<tr>
 						<th><label for="pmg_cutout_model"><?php esc_html_e( 'Cut-out model', 'pillow-mockup-generator' ); ?></label></th>
 						<td>
-							<input type="text" id="pmg_cutout_model" name="pmg[cutout_model]" value="<?php echo esc_attr( $s['cutout_model'] ); ?>" class="regular-text" list="pmg-models-list" />
-							<p class="description"><?php esc_html_e( 'Leave empty to reuse the mockup model.', 'pillow-mockup-generator' ); ?></p>
+							<?php $this->model_select( 'cutout_model', $s['cutout_model'], true, __( 'Same as mockup model', 'pillow-mockup-generator' ) ); ?>
+							<p class="description"><?php esc_html_e( 'Leave as "Same as mockup model" to reuse the mockup model.', 'pillow-mockup-generator' ); ?></p>
 						</td>
 					</tr>
 				</table>
@@ -502,6 +502,45 @@ class PMG_Admin {
 				</p>
 			</form>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Render a model picker: a select of Nano Banana models plus an "Other" custom field.
+	 *
+	 * @param string $key           Settings key (model|cutout_model).
+	 * @param string $current       Currently saved value.
+	 * @param bool   $include_empty Whether to offer an empty "same as" option.
+	 * @param string $empty_label   Label for the empty option.
+	 * @return void
+	 */
+	protected function model_select( $key, $current, $include_empty, $empty_label ) {
+		$models    = PMG_Settings::nano_banana_models();
+		$current   = (string) $current;
+		$is_known  = isset( $models[ $current ] ) || ( '' === $current && $include_empty );
+		$is_custom = '' !== $current && ! isset( $models[ $current ] );
+		$field_id  = 'pmg_' . $key;
+		?>
+		<select id="<?php echo esc_attr( $field_id ); ?>" name="pmg[<?php echo esc_attr( $key ); ?>]" class="regular-text" data-pmg-model-select="<?php echo esc_attr( $key ); ?>">
+			<?php if ( $include_empty ) : ?>
+				<option value="" <?php selected( '' === $current ); ?>><?php echo esc_html( $empty_label ); ?></option>
+			<?php endif; ?>
+			<?php foreach ( $models as $mid => $mname ) : ?>
+				<option value="<?php echo esc_attr( $mid ); ?>" <?php selected( $current, $mid ); ?>><?php echo esc_html( $mname ); ?></option>
+			<?php endforeach; ?>
+			<option value="__custom__" <?php selected( $is_custom ); ?>><?php esc_html_e( 'Other / custom model…', 'pillow-mockup-generator' ); ?></option>
+		</select>
+		<input
+			type="text"
+			id="<?php echo esc_attr( $field_id ); ?>_custom"
+			name="pmg[<?php echo esc_attr( $key ); ?>_custom]"
+			value="<?php echo esc_attr( $is_custom ? $current : '' ); ?>"
+			class="regular-text"
+			placeholder="<?php esc_attr_e( 'e.g. google/gemini-2.5-flash-image', 'pillow-mockup-generator' ); ?>"
+			list="pmg-models-list"
+			data-pmg-model-custom="<?php echo esc_attr( $key ); ?>"
+			<?php echo $is_custom ? '' : 'hidden'; ?>
+		/>
 		<?php
 	}
 

@@ -38,6 +38,20 @@ class PMG_Settings {
 	}
 
 	/**
+	 * Curated list of Google "Nano Banana" image models (OpenRouter slugs).
+	 *
+	 * @return array<string,string> Map of model id => human label.
+	 */
+	public static function nano_banana_models() {
+		return array(
+			'google/gemini-2.5-flash-image'         => 'Nano Banana (Gemini 2.5 Flash Image)',
+			'google/gemini-2.5-flash-image-preview' => 'Nano Banana (Gemini 2.5 Flash Image Preview)',
+			'google/gemini-3.1-flash-image-preview' => 'Nano Banana 2 (Gemini 3.1 Flash Image)',
+			'google/gemini-3-pro-image'             => 'Nano Banana Pro (Gemini 3 Pro Image)',
+		);
+	}
+
+	/**
 	 * Return all default settings.
 	 *
 	 * @return array
@@ -120,6 +134,14 @@ class PMG_Settings {
 		$defaults = self::defaults();
 		$current  = self::all();
 		$clean    = array();
+
+		// Resolve the "Other / custom model" choice into the actual model slug.
+		foreach ( array( 'model', 'cutout_model' ) as $model_key ) {
+			if ( isset( $input[ $model_key ] ) && '__custom__' === $input[ $model_key ] ) {
+				$custom_key        = $model_key . '_custom';
+				$input[ $model_key ] = isset( $input[ $custom_key ] ) ? $input[ $custom_key ] : '';
+			}
+		}
 
 		foreach ( $defaults as $key => $default ) {
 			$value = isset( $input[ $key ] ) ? $input[ $key ] : ( isset( $current[ $key ] ) ? $current[ $key ] : $default );
