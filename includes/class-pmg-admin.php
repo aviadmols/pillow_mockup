@@ -377,6 +377,12 @@ class PMG_Admin {
 				<tr><th><?php esc_html_e( 'Email', 'pillow-mockup-generator' ); ?></th><td><a href="mailto:<?php echo esc_attr( $lead['email'] ); ?>"><?php echo esc_html( $lead['email'] ); ?></a></td></tr>
 				<tr><th><?php esc_html_e( 'Phone', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['phone'] ); ?></td></tr>
 				<tr><th><?php esc_html_e( 'Status', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['status'] ); ?></td></tr>
+				<?php if ( ! empty( $lead['size'] ) ) : ?>
+					<tr><th><?php esc_html_e( 'Size', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['size'] ); ?></td></tr>
+				<?php endif; ?>
+				<?php if ( isset( $lead['price'] ) && '' !== $lead['price'] && null !== $lead['price'] ) : ?>
+					<tr><th><?php esc_html_e( 'Order price', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( (string) PMG_Settings::get( 'price_currency', '₪' ) . ' ' . number_format( (float) $lead['price'], 2 ) ); ?></td></tr>
+				<?php endif; ?>
 				<tr><th><?php esc_html_e( 'Tries', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['attempts'] ); ?></td></tr>
 				<tr><th><?php esc_html_e( 'AI cost', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $currency . number_format( (float) $lead['total_cost'], 4 ) ); ?></td></tr>
 				<tr><th><?php esc_html_e( 'Created', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['created_at'] ); ?></td></tr>
@@ -478,10 +484,10 @@ class PMG_Admin {
 				<h2><?php esc_html_e( 'Flow', 'pillow-mockup-generator' ); ?></h2>
 				<table class="form-table" role="presentation">
 					<tr>
-						<th><label for="pmg_max_attempts"><?php esc_html_e( 'Extra tries after details', 'pillow-mockup-generator' ); ?></label></th>
+						<th><label for="pmg_max_mockups"><?php esc_html_e( 'Free mockups per visitor', 'pillow-mockup-generator' ); ?></label></th>
 						<td>
-							<input type="number" min="1" id="pmg_max_attempts" name="pmg[max_attempts]" value="<?php echo esc_attr( $s['max_attempts'] ); ?>" class="small-text" />
-							<p class="description"><?php esc_html_e( 'The first mockup is free; this is how many extra tries a visitor gets after entering their details.', 'pillow-mockup-generator' ); ?></p>
+							<input type="number" min="1" id="pmg_max_mockups" name="pmg[max_mockups]" value="<?php echo esc_attr( $s['max_mockups'] ); ?>" class="small-text" />
+							<p class="description"><?php esc_html_e( 'How many mockups a visitor can generate for free (via "Change photo") before they must pick a size and register.', 'pillow-mockup-generator' ); ?></p>
 						</td>
 					</tr>
 					<tr>
@@ -497,6 +503,45 @@ class PMG_Admin {
 							<p class="description"><?php esc_html_e( 'Photos are downscaled on the visitor side to this longest edge before upload.', 'pillow-mockup-generator' ); ?></p>
 						</td>
 					</tr>
+				</table>
+
+				<h2><?php esc_html_e( 'Sizes & pricing', 'pillow-mockup-generator' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th><label for="pmg_price_currency"><?php esc_html_e( 'Price currency symbol', 'pillow-mockup-generator' ); ?></label></th>
+						<td><input type="text" id="pmg_price_currency" name="pmg[price_currency]" value="<?php echo esc_attr( $s['price_currency'] ); ?>" class="small-text" />
+							<p class="description"><?php esc_html_e( 'Shown to customers next to the size prices (e.g. ₪).', 'pillow-mockup-generator' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pmg_text_size_title"><?php esc_html_e( 'Size screen title', 'pillow-mockup-generator' ); ?></label></th>
+						<td><input type="text" id="pmg_text_size_title" name="pmg[text_size_title]" value="<?php echo esc_attr( $s['text_size_title'] ); ?>" class="regular-text" /></td>
+					</tr>
+					<?php
+					$pmg_size_rows = array(
+						'small'  => __( 'Small', 'pillow-mockup-generator' ),
+						'medium' => __( 'Medium', 'pillow-mockup-generator' ),
+						'large'  => __( 'Large', 'pillow-mockup-generator' ),
+					);
+					foreach ( $pmg_size_rows as $sid => $slabel ) :
+						?>
+						<tr>
+							<th><?php echo esc_html( $slabel ); ?></th>
+							<td>
+								<label><?php esc_html_e( 'Label', 'pillow-mockup-generator' ); ?>
+									<input type="text" name="pmg[size_<?php echo esc_attr( $sid ); ?>_label]" value="<?php echo esc_attr( $s[ 'size_' . $sid . '_label' ] ); ?>" class="regular-text" /></label>
+								&nbsp;
+								<label><?php esc_html_e( 'cm', 'pillow-mockup-generator' ); ?>
+									<input type="text" name="pmg[size_<?php echo esc_attr( $sid ); ?>_cm]" value="<?php echo esc_attr( $s[ 'size_' . $sid . '_cm' ] ); ?>" class="small-text" /></label>
+								&nbsp;
+								<label><?php esc_html_e( 'Price', 'pillow-mockup-generator' ); ?>
+									<input type="number" step="0.01" min="0" name="pmg[size_<?php echo esc_attr( $sid ); ?>_price]" value="<?php echo esc_attr( $s[ 'size_' . $sid . '_price' ] ); ?>" class="small-text" /></label>
+								&nbsp;
+								<label><?php esc_html_e( 'Compare-at price', 'pillow-mockup-generator' ); ?>
+									<input type="number" step="0.01" min="0" name="pmg[size_<?php echo esc_attr( $sid ); ?>_compare]" value="<?php echo esc_attr( $s[ 'size_' . $sid . '_compare' ] ); ?>" class="small-text" /></label>
+							</td>
+						</tr>
+					<?php endforeach; ?>
 				</table>
 
 				<h2><?php esc_html_e( 'Prompts', 'pillow-mockup-generator' ); ?></h2>

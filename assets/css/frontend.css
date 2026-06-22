@@ -101,6 +101,7 @@
 .pmg[data-state="upload"] .pmg__panel--upload,
 .pmg[data-state="loading"] .pmg__panel--loading,
 .pmg[data-state="preview"] .pmg__panel--preview,
+.pmg[data-state="size"] .pmg__panel--size,
 .pmg[data-state="details"] .pmg__panel--details,
 .pmg[data-state="done"] .pmg__panel--done {
 	display: block;
@@ -685,19 +686,9 @@
 	}
 }
 
-.pmg__label {
-	display: block;
-	font-size: 13px;
-	font-weight: 600;
-	color: var(--pmg-ink);
-	margin-block-end: 8px;
-	margin-inline-start: 4px;
-}
-
 .pmg__input-wrap {
 	position: relative;
-	display: flex;
-	align-items: center;
+	display: block;
 }
 
 .pmg__input {
@@ -705,7 +696,7 @@
 	font-family: inherit;
 	font-size: 16px;
 	color: var(--pmg-ink);
-	padding-block: 15px;
+	padding-block: 17px;
 	padding-inline: 16px;
 	border: 1.5px solid var(--pmg-rule);
 	border-radius: 14px;
@@ -713,9 +704,23 @@
 	transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
 }
 
-.pmg__input::placeholder {
+/* Floating label: sits as a placeholder, then shrinks up onto the border */
+.pmg__label {
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: 14px;
+	transform: translateY(-50%);
+	padding-inline: 5px;
+	background: var(--pmg-bg);
 	color: var(--pmg-muted);
-	opacity: 0.7;
+	font-size: 16px;
+	font-weight: 400;
+	pointer-events: none;
+	transition: all 0.18s ease;
+}
+
+.pmg__input::placeholder {
+	color: transparent;
 }
 
 .pmg__input:focus {
@@ -723,6 +728,23 @@
 	background: var(--pmg-paper);
 	border-color: var(--pmg-accent);
 	box-shadow: rgb(255 46 116 / 14%) 0 0 0 4px;
+}
+
+.pmg__input:focus ~ .pmg__label,
+.pmg__input:not(:placeholder-shown) ~ .pmg__label {
+	inset-block-start: 0;
+	transform: translateY(-50%) scale(0.82);
+	font-weight: 600;
+	color: var(--pmg-accent);
+}
+
+.pmg__input:not(:focus):not(:placeholder-shown) ~ .pmg__label {
+	color: var(--pmg-muted);
+}
+
+.pmg__input:focus ~ .pmg__label,
+.pmg__input:not(:placeholder-shown) ~ .pmg__label {
+	background: var(--pmg-paper);
 }
 
 .pmg__field.is-invalid .pmg__input {
@@ -838,6 +860,102 @@
 		margin-block-start: 6px;
 		margin-inline-start: 0;
 	}
+}
+
+/* ------------------------------------------------------------------ */
+/* Size selection                                                     */
+/* ------------------------------------------------------------------ */
+.pmg__panel--size {
+	padding: 8px 4px 4px;
+	text-align: center;
+}
+
+.pmg__size-title {
+	margin: 0 0 18px;
+	font-size: 20px;
+	font-weight: 700;
+	color: var(--pmg-ink);
+}
+
+.pmg__sizes {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-block-end: 20px;
+}
+
+.pmg__size {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	padding: 16px 18px;
+	border: 1.5px solid var(--pmg-rule);
+	border-radius: 16px;
+	background: var(--pmg-bg);
+	cursor: pointer;
+	text-align: start;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.pmg__size:hover {
+	border-color: var(--pmg-accent);
+	background: var(--pmg-paper);
+}
+
+.pmg__size.is-selected {
+	border-color: var(--pmg-accent);
+	box-shadow: rgb(255 46 116 / 14%) 0 0 0 4px;
+	background: var(--pmg-paper);
+}
+
+.pmg__size-name {
+	font-size: 17px;
+	font-weight: 700;
+	color: var(--pmg-ink);
+}
+
+.pmg__size-cm {
+	font-size: 14px;
+	color: var(--pmg-muted);
+}
+
+.pmg__size-prices {
+	margin-inline-start: auto;
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+}
+
+.pmg__size-price {
+	font-size: 18px;
+	font-weight: 800;
+	color: var(--pmg-accent);
+}
+
+.pmg__size-compare {
+	font-size: 14px;
+	color: var(--pmg-muted);
+	text-decoration: line-through;
+}
+
+/* Order summary inside details form */
+.pmg__order-summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-block-end: 18px;
+	padding: 12px 16px;
+	border-radius: 14px;
+	background: var(--pmg-bg);
+	border: 1.5px dashed var(--pmg-rule);
+	font-size: 15px;
+	color: var(--pmg-ink);
+}
+
+.pmg__order-summary strong {
+	color: var(--pmg-accent);
 }
 
 /* ------------------------------------------------------------------ */
@@ -963,4 +1081,17 @@
 
 .pmg.pmg .pmg__thumb.is-selected {
 	border-color: var(--pmg-accent);
+}
+
+.pmg.pmg .pmg__size {
+	background: var(--pmg-bg);
+	color: var(--pmg-ink);
+	border: 1.5px solid var(--pmg-rule);
+	font-size: inherit;
+}
+
+.pmg.pmg .pmg__size:hover,
+.pmg.pmg .pmg__size.is-selected {
+	border-color: var(--pmg-accent);
+	background: var(--pmg-paper);
 }

@@ -118,32 +118,21 @@ class PMG_Rest {
 		$lead    = PMG_Leads::get_by_session( $session );
 		$has_lead = $lead && is_email( $lead['email'] );
 
-		$max_attempts = (int) PMG_Settings::get( 'max_attempts', 5 );
+		$max_mockups  = max( 1, (int) PMG_Settings::get( 'max_mockups', 3 ) );
 		$done_mockups = PMG_Leads::count_generations( $session, 'mockup', 'success' );
 
-		// Gating: first mockup is free; any further generation needs captured details.
-		if ( $done_mockups >= 1 ) {
-			if ( ! $has_lead ) {
-				return new WP_REST_Response(
-					array(
-						'code'    => 'need_details',
-						'session' => $session,
-						'message' => __( 'Please add your details to keep designing.', 'pillow-mockup-generator' ),
-					),
-					403
-				);
-			}
-			if ( $done_mockups >= ( 1 + $max_attempts ) ) {
-				return new WP_REST_Response(
-					array(
-						'code'          => 'max_attempts',
-						'session'       => $session,
-						'attempts_left' => 0,
-						'message'       => (string) PMG_Settings::get( 'text_max_reached' ),
-					),
-					429
-				);
-			}
+		// Gating: up to N mockups are free with no details required. Once the cap
+		// is reached, stop generating (details are only collected at checkout).
+		if ( $done_mockups >= $max_mockups ) {
+			return new WP_REST_Response(
+				array(
+					'code'          => 'max_attempts',
+					'session'       => $session,
+					'attempts_left' => 0,
+					'message'       => (string) PMG_Settings::get( 'text_max_reached' ),
+				),
+				429
+			);
 		}
 
 		// Resolve the reference image (new upload or reuse stored original).
@@ -181,8 +170,7 @@ class PMG_Rest {
 			);
 		}
 
-		$extra_used    = max( 0, $total_done - 1 );
-		$attempts_left = max( 0, $max_attempts - $extra_used );
+		$attempts_left = max( 0, $max_mockups - $total_done );
 
 		return new WP_REST_Response(
 			array(
@@ -192,10 +180,9 @@ class PMG_Rest {
 				'mockups'       => PMG_Leads::session_mockups( $session ),
 				'selected'      => $result['url'],
 				'attempt'       => $total_done,
-				'max_attempts'  => $max_attempts,
+				'max_attempts'  => $max_mockups,
 				'attempts_left' => $attempts_left,
 				'has_lead'      => $has_lead,
-				'needs_details' => ! $has_lead,
 			),
 			200
 		);
@@ -214,9 +201,9 @@ class PMG_Rest {
 		$lead    = PMG_Leads::get_by_session( $session );
 		$has_lead = $lead && is_email( $lead['email'] );
 
-		$max_attempts = (int) PMG_Settings::get( 'max_attempts', 5 );
+		$max_mockups  = max( 1, (int) PMG_Settings::get( 'max_mockups', 3 ) );
 		$done_mockups = PMG_Leads::count_generations( $session, 'mockup', 'success' );
-		$attempts_left = max( 0, $max_attempts - max( 0, $done_mockups - 1 ) );
+		$attempts_left = max( 0, $max_mockups - $done_mockups );
 
 		// Prefer the explicitly selected/saved mockup, else the latest one.
 		$selected = '';
@@ -352,14 +339,23 @@ class PMG_Rest {
 			$selected = isset( $work['mockup_url'] ) && $work['mockup_url'] ? $work['mockup_url'] : $lead['mockup_image'];
 		}
 
-		PMG_Leads::upsert(
-			$session,
-			array(
-				'status'       => 'completed',
-				'mockup_image' => $selected,
-				'total_cost'   => PMG_Leads::session_cost( $session ),
-			)
+		// Validate the chosen size against configured tiers and capture its price.
+		$update = array(
+			'status'       => 'completed',
+			'mockup_image' => $selected,
+			'total_cost'   => PMG_Leads::session_cost( $session ),
 		);
+
+		$size_id = sanitize_key( (string) $request->get_param( 'size' ) );
+		if ( '' !== $size_id ) {
+			$tier = PMG_Settings::size( $size_id );
+			if ( $tier ) {
+				$update['size']  = $tier['label'];
+				$update['price'] = $tier['price'];
+			}
+		}
+
+		PMG_Leads::upsert( $session, $update );
 
 		$lead = PMG_Leads::get_by_session( $session );
 		if ( $lead ) {

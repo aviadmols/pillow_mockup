@@ -95,6 +95,17 @@ class PMG_Emailer {
 
 		$body  = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#222;">';
 		$body .= '<p>' . nl2br( esc_html( $message ) ) . '</p>';
+		if ( ! empty( $lead['size'] ) || ( isset( $lead['price'] ) && '' !== $lead['price'] && null !== $lead['price'] ) ) {
+			$price_currency = (string) PMG_Settings::get( 'price_currency', '₪' );
+			$summary        = array();
+			if ( ! empty( $lead['size'] ) ) {
+				$summary[] = esc_html( $lead['size'] );
+			}
+			if ( isset( $lead['price'] ) && '' !== $lead['price'] && null !== $lead['price'] ) {
+				$summary[] = esc_html( $price_currency . ' ' . number_format( (float) $lead['price'], 2 ) );
+			}
+			$body .= '<p style="font-weight:bold;">' . implode( ' — ', $summary ) . '</p>';
+		}
 		if ( ! empty( $lead['mockup_image'] ) ) {
 			$body .= '<p><img src="' . esc_url( $lead['mockup_image'] ) . '" alt="" style="max-width:420px;width:100%;height:auto;border-radius:8px;" /></p>';
 		}
@@ -119,9 +130,18 @@ class PMG_Emailer {
 			__( 'Email', 'pillow-mockup-generator' )    => $lead['email'],
 			__( 'Phone', 'pillow-mockup-generator' )    => $lead['phone'],
 			__( 'Status', 'pillow-mockup-generator' )   => $lead['status'],
-			__( 'Attempts', 'pillow-mockup-generator' ) => $lead['attempts'],
-			__( 'AI cost', 'pillow-mockup-generator' )  => $currency . number_format( (float) $lead['total_cost'], 4 ),
 		);
+
+		if ( ! empty( $lead['size'] ) ) {
+			$rows[ __( 'Size', 'pillow-mockup-generator' ) ] = $lead['size'];
+		}
+		if ( isset( $lead['price'] ) && '' !== $lead['price'] && null !== $lead['price'] ) {
+			$price_currency = (string) PMG_Settings::get( 'price_currency', '₪' );
+			$rows[ __( 'Order price', 'pillow-mockup-generator' ) ] = $price_currency . ' ' . number_format( (float) $lead['price'], 2 );
+		}
+
+		$rows[ __( 'Attempts', 'pillow-mockup-generator' ) ] = $lead['attempts'];
+		$rows[ __( 'AI cost', 'pillow-mockup-generator' ) ]  = $currency . number_format( (float) $lead['total_cost'], 4 );
 
 		$html  = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#222;">';
 		$html .= '<p>' . esc_html( $intro ) . '</p>';

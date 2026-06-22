@@ -4,7 +4,7 @@ Tags: ai, openrouter, mockup, lead generation, image generation
 Requires at least: 5.8
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 License: GPLv2 or later
 
 Mixtiles-style widget that turns a customer photo into a custom-shaped pillow mockup with OpenRouter, captures leads, and saves the original / mockup / print-ready cut-out images.
@@ -40,6 +40,13 @@ Each registrant stores three files: the original photo, the chosen mockup, and t
 4. Add `[pillow_mockup]` to any page or post.
 
 == Changelog ==
+
+= 1.4.0 =
+* New: size selection screen — after "I love it", visitors pick Small / Medium / Large with a sale price and crossed-out compare-at price (all editable under Settings → Sizes & pricing).
+* New: the registration form now shows an order summary (chosen size + price), and the order's size and price are saved on the lead, shown in the admin order screen, and included in the customer/admin emails.
+* Changed: visitors can now generate up to a configurable number of free mockups (default 3) via "Change photo" without registering; details are only collected at checkout.
+* New: floating labels on all details-form fields (label sits inside the input and floats up on focus/fill).
+* Changed: a failed mockup generation now shows a friendly inline message ("יצירת המוקאפ נכשלה. נסו שנית.") instead of a browser alert with the raw server response.
 
 = 1.3.0 =
 * New: visitors now keep their session between visits — returning to the page shows the mockups they already generated instead of starting over.

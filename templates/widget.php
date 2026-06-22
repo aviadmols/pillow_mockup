@@ -41,6 +41,7 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 				</button>
 				<p class="pmg__placeholder-hint"><?php echo esc_html( $settings['text_upload'] ); ?></p>
 			</div>
+			<p class="pmg__notice" data-pmg-upload-notice hidden></p>
 		</div>
 
 		<!-- Loading -->
@@ -76,6 +77,41 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 			<p class="pmg__notice" data-pmg-preview-notice hidden></p>
 		</div>
 
+		<!-- Size selection -->
+		<div class="pmg__panel pmg__panel--size" data-panel="size">
+			<h3 class="pmg__size-title"><?php echo esc_html( $settings['text_size_title'] ); ?></h3>
+			<?php
+			$pmg_sizes    = PMG_Settings::sizes();
+			$pmg_currency = (string) $settings['price_currency'];
+			?>
+			<div class="pmg__sizes">
+				<?php foreach ( $pmg_sizes as $pmg_size ) : ?>
+					<button
+						type="button"
+						class="pmg__size"
+						data-pmg-size="<?php echo esc_attr( $pmg_size['id'] ); ?>"
+						data-price="<?php echo esc_attr( $pmg_size['price'] ); ?>"
+						data-label="<?php echo esc_attr( $pmg_size['label'] ); ?>"
+						data-cm="<?php echo esc_attr( $pmg_size['cm'] ); ?>"
+					>
+						<span class="pmg__size-name"><?php echo esc_html( $pmg_size['label'] ); ?></span>
+						<?php if ( '' !== $pmg_size['cm'] ) : ?>
+							<span class="pmg__size-cm"><?php echo esc_html( $pmg_size['cm'] ); ?> <?php esc_html_e( 'ס"מ', 'pillow-mockup-generator' ); ?></span>
+						<?php endif; ?>
+						<span class="pmg__size-prices">
+							<span class="pmg__size-price"><?php echo esc_html( $pmg_currency . ' ' . (string) (float) $pmg_size['price'] ); ?></span>
+							<?php if ( $pmg_size['compare'] > 0 && $pmg_size['compare'] > $pmg_size['price'] ) : ?>
+								<span class="pmg__size-compare"><?php echo esc_html( $pmg_currency . ' ' . (string) (float) $pmg_size['compare'] ); ?></span>
+							<?php endif; ?>
+						</span>
+					</button>
+				<?php endforeach; ?>
+			</div>
+			<div class="pmg__form-actions">
+				<button type="button" class="pmg__btn pmg__btn--ghost" data-pmg-action="back-to-preview"><?php esc_html_e( 'חזרה', 'pillow-mockup-generator' ); ?></button>
+			</div>
+		</div>
+
 		<!-- Details -->
 		<div class="pmg__panel pmg__panel--details" data-panel="details">
 			<form class="pmg__form" data-pmg-form novalidate>
@@ -84,42 +120,44 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 					<p class="pmg__form-subtitle"><?php echo esc_html( $settings['text_details_subtitle'] ); ?></p>
 				<?php endif; ?>
 
+				<div class="pmg__order-summary" data-pmg-order-summary hidden></div>
+
 				<div class="pmg__field-row">
 					<div class="pmg__field">
-						<label class="pmg__label" for="pmg-first-name"><?php echo esc_html( $settings['text_first_name'] ); ?></label>
 						<div class="pmg__input-wrap">
-							<input class="pmg__input" type="text" id="pmg-first-name" name="first_name" autocomplete="given-name" placeholder="<?php echo esc_attr( $settings['text_first_name'] ); ?>" data-pmg-input="first_name" />
+							<input class="pmg__input" type="text" id="pmg-first-name" name="first_name" autocomplete="given-name" placeholder=" " data-pmg-input="first_name" />
+							<label class="pmg__label" for="pmg-first-name"><?php echo esc_html( $settings['text_first_name'] ); ?></label>
 						</div>
 						<span class="pmg__error" data-pmg-error="first_name"></span>
 					</div>
 
 					<div class="pmg__field">
-						<label class="pmg__label" for="pmg-last-name"><?php echo esc_html( $settings['text_last_name'] ); ?></label>
 						<div class="pmg__input-wrap">
-							<input class="pmg__input" type="text" id="pmg-last-name" name="last_name" autocomplete="family-name" placeholder="<?php echo esc_attr( $settings['text_last_name'] ); ?>" data-pmg-input="last_name" />
+							<input class="pmg__input" type="text" id="pmg-last-name" name="last_name" autocomplete="family-name" placeholder=" " data-pmg-input="last_name" />
+							<label class="pmg__label" for="pmg-last-name"><?php echo esc_html( $settings['text_last_name'] ); ?></label>
 						</div>
 						<span class="pmg__error" data-pmg-error="last_name"></span>
 					</div>
 				</div>
 
 				<div class="pmg__field">
-					<label class="pmg__label" for="pmg-phone"><?php echo esc_html( $settings['text_phone'] ); ?></label>
 					<div class="pmg__input-wrap">
-						<input class="pmg__input" type="tel" id="pmg-phone" name="phone" autocomplete="tel" placeholder="<?php echo esc_attr( $settings['text_phone'] ); ?>" data-pmg-input="phone" />
+						<input class="pmg__input" type="tel" id="pmg-phone" name="phone" autocomplete="tel" placeholder=" " data-pmg-input="phone" />
+						<label class="pmg__label" for="pmg-phone"><?php echo esc_html( $settings['text_phone'] ); ?></label>
 					</div>
 					<span class="pmg__error" data-pmg-error="phone"></span>
 				</div>
 
 				<div class="pmg__field">
-					<label class="pmg__label" for="pmg-email"><?php echo esc_html( $settings['text_email'] ); ?></label>
 					<div class="pmg__input-wrap">
-						<input class="pmg__input" type="email" id="pmg-email" name="email" autocomplete="email" placeholder="<?php echo esc_attr( $settings['text_email'] ); ?>" data-pmg-input="email" />
+						<input class="pmg__input" type="email" id="pmg-email" name="email" autocomplete="email" placeholder=" " data-pmg-input="email" />
+						<label class="pmg__label" for="pmg-email"><?php echo esc_html( $settings['text_email'] ); ?></label>
 					</div>
 					<span class="pmg__error" data-pmg-error="email"></span>
 				</div>
 
 				<div class="pmg__form-actions">
-					<button type="button" class="pmg__btn pmg__btn--ghost" data-pmg-action="back-to-preview"><?php esc_html_e( 'חזרה', 'pillow-mockup-generator' ); ?></button>
+					<button type="button" class="pmg__btn pmg__btn--ghost" data-pmg-action="back-to-size"><?php esc_html_e( 'חזרה', 'pillow-mockup-generator' ); ?></button>
 					<button type="submit" class="pmg__btn pmg__btn--primary" data-pmg-submit><?php echo esc_html( $settings['text_submit'] ); ?></button>
 				</div>
 

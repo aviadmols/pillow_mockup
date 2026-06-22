@@ -144,7 +144,8 @@
 			pending: null,
 			image: '',
 			mockups: [],
-			selectedUrl: ''
+			selectedUrl: '',
+			size: null
 		};
 		this.lottie = null;
 
@@ -159,7 +160,9 @@
 			lottie: root.querySelector('[data-pmg-lottie]'),
 			loadingText: root.querySelector('[data-pmg-loading-text]'),
 			gallery: root.querySelector('[data-pmg-gallery]'),
+			uploadNotice: root.querySelector('[data-pmg-upload-notice]'),
 			previewNotice: root.querySelector('[data-pmg-preview-notice]'),
+			orderSummary: root.querySelector('[data-pmg-order-summary]'),
 			form: root.querySelector('[data-pmg-form]'),
 			formNotice: root.querySelector('[data-pmg-form-notice]')
 		};
@@ -351,6 +354,13 @@
 			});
 		});
 
+		// Size selection cards.
+		this.root.querySelectorAll('[data-pmg-size]').forEach(function (card) {
+			card.addEventListener('click', function () {
+				self.selectSize(card);
+			});
+		});
+
 		// Details form.
 		if (this.els.form) {
 			this.els.form.addEventListener('submit', function (e) {
@@ -414,37 +424,80 @@
 	Widget.prototype.onAction = function (action) {
 		switch (action) {
 			case 'change':
-				if (!this.state.hasLead) {
-					this.openDetails('change');
+				if ((this.state.mockups || []).length >= (CFG.maxMockups || 3)) {
+					this.notice(this.els.previewNotice, CFG.i18n.maxReached);
 				} else {
+					this.notice(this.els.previewNotice, '');
 					this.els.file && this.els.file.click();
 				}
 				break;
 			case 'love':
-				if (!this.state.hasLead) {
-					this.openDetails('love');
-				} else {
-					this.finalize();
-				}
+				this.openSize();
 				break;
 			case 'back-to-preview':
 				this.setState('preview');
 				break;
+			case 'back-to-size':
+				this.setState('size');
+				break;
 		}
+	};
+
+	Widget.prototype.openSize = function () {
+		this.notice(this.els.previewNotice, '');
+		this.setState('size');
+	};
+
+	Widget.prototype.selectSize = function (el) {
+		if (!el) {
+			return;
+		}
+		var sizes = this.root.querySelectorAll('[data-pmg-size]');
+		for (var i = 0; i < sizes.length; i++) {
+			sizes[i].classList.remove('is-selected');
+		}
+		el.classList.add('is-selected');
+		this.state.size = {
+			id: el.getAttribute('data-pmg-size'),
+			label: el.getAttribute('data-label') || '',
+			cm: el.getAttribute('data-cm') || '',
+			price: parseFloat(el.getAttribute('data-price')) || 0
+		};
+		this.openDetails('love');
+	};
+
+	Widget.prototype.fillSummary = function () {
+		var el = this.els.orderSummary;
+		if (!el) {
+			return;
+		}
+		var s = this.state.size;
+		if (!s) {
+			el.hidden = true;
+			el.innerHTML = '';
+			return;
+		}
+		var cur = CFG.priceCurrency || '';
+		var sizeText = s.label + (s.cm ? ' · ' + s.cm + ' ' + (CFG.i18n.cmUnit || '') : '');
+		el.innerHTML = '<span>' + sizeText + '</span><strong>' + cur + ' ' + s.price + '</strong>';
+		el.hidden = false;
 	};
 
 	Widget.prototype.openDetails = function (pending) {
 		this.state.pending = pending;
 		this.notice(this.els.formNotice, '');
+		this.fillSummary();
 		this.setState('details');
 	};
 
 	Widget.prototype.handleFile = function (file) {
 		var self = this;
 		if (!file.type || file.type.indexOf('image/') !== 0) {
-			alert(CFG.i18n.invalidFile);
+			this.notice(this.els.uploadNotice, CFG.i18n.invalidFile);
+			this.setState('upload');
 			return;
 		}
+		this.notice(this.els.uploadNotice, '');
 		this.setState('loading');
 		this.busy(true);
 		fileToDataUrl(file, CFG.maxPx).then(function (dataUrl) {
@@ -452,8 +505,8 @@
 			self.generate(dataUrl);
 		}).catch(function () {
 			self.busy(false);
+			self.notice(self.els.uploadNotice, CFG.i18n.invalidFile);
 			self.setState('upload');
-			alert(CFG.i18n.invalidFile);
 		});
 	};
 
@@ -472,19 +525,15 @@
 				self.setSession(d.session);
 			}
 
-			if (res.status === 403 && d.code === 'need_details') {
-				self.openDetails(self.state.pending || 'change');
-				return;
-			}
 			if (res.status === 429 || d.code === 'max_attempts') {
 				self.state.attemptsLeft = 0;
 				self.showResult();
-				self.notice(self.els.previewNotice, d.message || '');
+				self.notice(self.els.previewNotice, d.message || CFG.i18n.maxReached);
 				self.updateToolbar();
 				return;
 			}
 			if (!res.ok || d.code !== 'ok') {
-				self.fail(d.message);
+				self.fail();
 				return;
 			}
 
@@ -572,14 +621,16 @@
 		}
 	};
 
-	Widget.prototype.fail = function (message) {
-		this.notice(this.els.previewNotice, message || CFG.i18n.genericError);
+	Widget.prototype.fail = function () {
+		// Always show a friendly, fixed inline message (never the raw server reply).
+		var msg = CFG.i18n.generateFailed || CFG.i18n.genericError;
 		// If we already have a result, stay on preview; otherwise return to upload.
 		if (this.els.result && this.els.result.getAttribute('src')) {
+			this.notice(this.els.previewNotice, msg);
 			this.setState('preview');
 		} else {
+			this.notice(this.els.uploadNotice, msg);
 			this.setState('upload');
-			alert(message || CFG.i18n.genericError);
 		}
 	};
 
@@ -645,20 +696,10 @@
 
 			self.state.hasLead = true;
 			self.state.attemptsLeft = typeof d.attempts_left === 'number' ? d.attempts_left : self.state.attemptsLeft;
-
-			var pending = self.state.pending;
 			self.state.pending = null;
 
-			if (pending === 'love') {
-				self.finalize();
-			} else if (pending === 'change') {
-				self.setState('preview');
-				self.updateToolbar();
-				self.els.file && self.els.file.click();
-			} else {
-				self.setState('preview');
-				self.updateToolbar();
-			}
+			// Details are only reached after choosing a size, so finalize the order.
+			self.finalize();
 		}).catch(function () {
 			self.busy(false);
 			self.notice(self.els.formNotice, CFG.i18n.genericError);
@@ -670,7 +711,12 @@
 		this.setState('loading');
 		this.busy(true);
 
-		api('finalize', { session: this.state.session, mockup: this.state.selectedUrl }).then(function (res) {
+		var payload = { session: this.state.session, mockup: this.state.selectedUrl };
+		if (this.state.size && this.state.size.id) {
+			payload.size = this.state.size.id;
+		}
+
+		api('finalize', payload).then(function (res) {
 			self.busy(false);
 			var d = res.data;
 			if (d.session) {
@@ -681,13 +727,15 @@
 				return;
 			}
 			if (!res.ok || d.code !== 'done') {
-				self.fail(d.message);
+				self.notice(self.els.formNotice, d.message || CFG.i18n.genericError);
+				self.setState('details');
 				return;
 			}
 			self.setState('done');
 		}).catch(function () {
 			self.busy(false);
-			self.fail();
+			self.notice(self.els.formNotice, CFG.i18n.genericError);
+			self.setState('details');
 		});
 	};
 

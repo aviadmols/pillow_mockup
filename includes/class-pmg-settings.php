@@ -52,6 +52,46 @@ class PMG_Settings {
 	}
 
 	/**
+	 * The three customer-facing size/price tiers, normalised for the front-end
+	 * and for order validation.
+	 *
+	 * @return array<int,array{id:string,label:string,cm:string,price:float,compare:float}>
+	 */
+	public static function sizes() {
+		$tiers = array();
+		foreach ( array( 'small', 'medium', 'large' ) as $id ) {
+			$label = (string) self::get( 'size_' . $id . '_label', '' );
+			$price = (float) self::get( 'size_' . $id . '_price', 0 );
+			if ( '' === $label || $price <= 0 ) {
+				continue;
+			}
+			$tiers[] = array(
+				'id'      => $id,
+				'label'   => $label,
+				'cm'      => (string) self::get( 'size_' . $id . '_cm', '' ),
+				'price'   => $price,
+				'compare' => (float) self::get( 'size_' . $id . '_compare', 0 ),
+			);
+		}
+		return $tiers;
+	}
+
+	/**
+	 * Look up a single size tier by id.
+	 *
+	 * @param string $id Size id (small|medium|large).
+	 * @return array|null
+	 */
+	public static function size( $id ) {
+		foreach ( self::sizes() as $tier ) {
+			if ( $tier['id'] === $id ) {
+				return $tier;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Return all default settings.
 	 *
 	 * @return array
@@ -62,11 +102,27 @@ class PMG_Settings {
 			'model'             => 'google/gemini-2.5-flash-image',
 			'cutout_model'      => '',
 			'max_attempts'      => 5,
+			'max_mockups'       => 3,
 			'enable_cutout'     => 1,
 			'admin_email'       => get_option( 'admin_email' ),
 			'currency'          => '$',
+			'price_currency'    => '₪',
 			'font_family'       => '',
 			'lottie_url'        => '',
+			// Sizes & pricing (customer facing).
+			'size_small_label'    => 'קטן',
+			'size_small_cm'       => '15',
+			'size_small_price'    => '99',
+			'size_small_compare'  => '129',
+			'size_medium_label'   => 'בינוני',
+			'size_medium_cm'      => '25',
+			'size_medium_price'   => '149',
+			'size_medium_compare' => '199',
+			'size_large_label'    => 'גדול',
+			'size_large_cm'       => '40',
+			'size_large_price'    => '229',
+			'size_large_compare'  => '299',
+			'text_size_title'     => 'בחרו גודל',
 			'max_upload_px'     => 1280,
 			'site_title'        => get_bloginfo( 'name' ),
 			'mockup_prompt'     => self::default_mockup_prompt(),
@@ -217,6 +273,17 @@ class PMG_Settings {
 					break;
 				case 'max_attempts':
 					$clean[ $key ] = max( 1, absint( $value ) );
+					break;
+				case 'max_mockups':
+					$clean[ $key ] = max( 1, absint( $value ) );
+					break;
+				case 'size_small_price':
+				case 'size_small_compare':
+				case 'size_medium_price':
+				case 'size_medium_compare':
+				case 'size_large_price':
+				case 'size_large_compare':
+					$clean[ $key ] = (string) max( 0, (float) $value );
 					break;
 				case 'max_upload_px':
 					$clean[ $key ] = max( 256, absint( $value ) );

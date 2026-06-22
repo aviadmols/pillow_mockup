@@ -90,9 +90,14 @@ class PMG_Shortcode {
 				'lottieUrl'     => esc_url_raw( $lottie_url ),
 				'maxPx'         => (int) PMG_Settings::get( 'max_upload_px', 1280 ),
 				'attemptsLabel' => (string) PMG_Settings::get( 'text_attempts_left', 'attempts left' ),
+				'maxMockups'    => (int) PMG_Settings::get( 'max_mockups', 3 ),
+				'priceCurrency' => (string) PMG_Settings::get( 'price_currency', '₪' ),
 				'i18n'      => array(
-					'genericError' => __( 'Something went wrong. Please try again.', 'pillow-mockup-generator' ),
-					'invalidFile'  => __( 'Please choose an image file (JPG, PNG or WEBP).', 'pillow-mockup-generator' ),
+					'genericError'   => __( 'אירעה תקלה. נסו שנית.', 'pillow-mockup-generator' ),
+					'generateFailed' => __( 'יצירת המוקאפ נכשלה. נסו שנית.', 'pillow-mockup-generator' ),
+					'invalidFile'    => __( 'בחרו קובץ תמונה (JPG, PNG או WEBP).', 'pillow-mockup-generator' ),
+					'maxReached'     => __( 'הגעתם למספר התמונות המרבי.', 'pillow-mockup-generator' ),
+					'cmUnit'         => __( 'ס"מ', 'pillow-mockup-generator' ),
 				),
 			)
 		);

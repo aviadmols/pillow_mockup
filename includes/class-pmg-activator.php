@@ -93,6 +93,8 @@ class PMG_Activator {
 			mockup_image text NULL,
 			cutout_image text NULL,
 			total_cost decimal(12,6) NOT NULL DEFAULT 0,
+			size varchar(64) NULL,
+			price decimal(10,2) NULL,
 			ip varchar(64) NOT NULL DEFAULT '',
 			created_at datetime NOT NULL,
 			updated_at datetime NOT NULL,
