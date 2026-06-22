@@ -102,9 +102,17 @@
 }
 
 .pmg__benefit-icon {
+	flex: none;
 	width: 44px;
 	height: 44px;
 	object-fit: contain;
+}
+
+.pmg__benefit-body {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
 }
 
 .pmg__benefit-title {
@@ -127,7 +135,25 @@
 @media (max-width: 600px) {
 	.pmg__benefits {
 		grid-template-columns: 1fr;
-		gap: 18px;
+		gap: 16px;
+	}
+
+	.pmg__benefit {
+		flex-direction: row;
+		align-items: flex-start;
+		gap: 20px;
+		text-align: start;
+		padding-block-end: 16px;
+		border-block-end: 1px solid var(--pmg-rule);
+	}
+
+	.pmg__benefit:last-child {
+		padding-block-end: 0;
+		border-block-end: 0;
+	}
+
+	.pmg__benefit-text {
+		max-width: none;
 	}
 }
 
