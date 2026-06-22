@@ -461,7 +461,8 @@
 			id: el.getAttribute('data-pmg-size'),
 			label: el.getAttribute('data-label') || '',
 			cm: el.getAttribute('data-cm') || '',
-			price: parseFloat(el.getAttribute('data-price')) || 0
+			price: parseFloat(el.getAttribute('data-price')) || 0,
+			compare: parseFloat(el.getAttribute('data-compare')) || 0
 		};
 		this.openDetails('love');
 	};
@@ -479,7 +480,11 @@
 		}
 		var cur = CFG.priceCurrency || '';
 		var sizeText = s.label + (s.cm ? ' · ' + s.cm + ' ' + (CFG.i18n.cmUnit || '') : '');
-		el.innerHTML = '<span>' + sizeText + '</span><strong>' + cur + ' ' + s.price + '</strong>';
+		var priceHtml = '<strong>' + cur + ' ' + s.price + '</strong>';
+		if (s.compare && s.compare > s.price) {
+			priceHtml = '<span class="pmg__order-prices"><s class="pmg__order-compare">' + cur + ' ' + s.compare + '</s>' + priceHtml + '</span>';
+		}
+		el.innerHTML = '<span>' + sizeText + '</span>' + priceHtml;
 		el.hidden = false;
 	};
 

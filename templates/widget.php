@@ -25,6 +25,24 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 		<p class="pmg__subtitle"><?php echo esc_html( $settings['text_subheading'] ); ?></p>
 	</header>
 
+	<ul class="pmg__benefits">
+		<li class="pmg__benefit">
+			<img class="pmg__benefit-icon" src="https://www.schoolist.co.il/wp-content/uploads/2026/06/sewing.svg" alt="" width="44" height="44" />
+			<h3 class="pmg__benefit-title"><?php esc_html_e( 'תפירה ידנית קפדנית', 'pillow-mockup-generator' ); ?></h3>
+			<p class="pmg__benefit-text"><?php esc_html_e( 'כל מוצר מיוצר ביד דקה ובתשומת לב מלאה לפרטים הקטנים ביותר, בשביל איכות גימור ללא פשרות.', 'pillow-mockup-generator' ); ?></p>
+		</li>
+		<li class="pmg__benefit">
+			<img class="pmg__benefit-icon" src="https://www.schoolist.co.il/wp-content/uploads/2026/06/paint-bucket.svg" alt="" width="44" height="44" />
+			<h3 class="pmg__benefit-title"><?php esc_html_e( 'הדפסה איכותית', 'pillow-mockup-generator' ); ?></h3>
+			<p class="pmg__benefit-text"><?php esc_html_e( 'צבעים חיים ועמידים שלא דוהים בכביסה או בשימוש ממושך. המוצר שלך יישאר כמו חדש לאורך זמן.', 'pillow-mockup-generator' ); ?></p>
+		</li>
+		<li class="pmg__benefit">
+			<img class="pmg__benefit-icon" src="https://www.schoolist.co.il/wp-content/uploads/2026/06/gift.svg" alt="" width="44" height="44" />
+			<h3 class="pmg__benefit-title"><?php esc_html_e( 'המתנה המושלמת עבורכם', 'pillow-mockup-generator' ); ?></h3>
+			<p class="pmg__benefit-text"><?php esc_html_e( 'פריט ייחודי ומרגש שכיף לתת ועוד יותר כיף לקבל. סגירת פינה מושלמת לכל אירוע.', 'pillow-mockup-generator' ); ?></p>
+		</li>
+	</ul>
+
 	<div class="pmg__stage">
 
 		<!-- Upload (Mixtiles-style empty frame + add button) -->
@@ -91,6 +109,7 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 						class="pmg__size"
 						data-pmg-size="<?php echo esc_attr( $pmg_size['id'] ); ?>"
 						data-price="<?php echo esc_attr( $pmg_size['price'] ); ?>"
+						data-compare="<?php echo esc_attr( $pmg_size['compare'] ); ?>"
 						data-label="<?php echo esc_attr( $pmg_size['label'] ); ?>"
 						data-cm="<?php echo esc_attr( $pmg_size['cm'] ); ?>"
 					>
@@ -107,6 +126,10 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 					</button>
 				<?php endforeach; ?>
 			</div>
+			<p class="pmg__shipping">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h2"/><path d="M14 9h4l3 3v5a1 1 0 0 1-1 1h-1"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg>
+				<span><?php esc_html_e( 'משלוח חינם עד הבית', 'pillow-mockup-generator' ); ?></span>
+			</p>
 			<div class="pmg__form-actions">
 				<button type="button" class="pmg__btn pmg__btn--ghost" data-pmg-action="back-to-preview"><?php esc_html_e( 'חזרה', 'pillow-mockup-generator' ); ?></button>
 			</div>
