@@ -25,30 +25,6 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 		<p class="pmg__subtitle"><?php echo esc_html( $settings['text_subheading'] ); ?></p>
 	</header>
 
-	<ul class="pmg__benefits">
-		<li class="pmg__benefit">
-			<img class="pmg__benefit-icon" src="https://www.schoolist.co.il/wp-content/uploads/2026/06/sewing.svg" alt="" width="44" height="44" />
-			<div class="pmg__benefit-body">
-				<h3 class="pmg__benefit-title"><?php esc_html_e( 'תפירה ידנית קפדנית', 'pillow-mockup-generator' ); ?></h3>
-				<p class="pmg__benefit-text"><?php esc_html_e( 'כל מוצר מיוצר ביד דקה ובתשומת לב מלאה לפרטים הקטנים ביותר, בשביל איכות גימור ללא פשרות.', 'pillow-mockup-generator' ); ?></p>
-			</div>
-		</li>
-		<li class="pmg__benefit">
-			<img class="pmg__benefit-icon" src="https://www.schoolist.co.il/wp-content/uploads/2026/06/paint-bucket.svg" alt="" width="44" height="44" />
-			<div class="pmg__benefit-body">
-				<h3 class="pmg__benefit-title"><?php esc_html_e( 'הדפסה איכותית', 'pillow-mockup-generator' ); ?></h3>
-				<p class="pmg__benefit-text"><?php esc_html_e( 'צבעים חיים ועמידים שלא דוהים בכביסה או בשימוש ממושך. המוצר שלך יישאר כמו חדש לאורך זמן.', 'pillow-mockup-generator' ); ?></p>
-			</div>
-		</li>
-		<li class="pmg__benefit">
-			<img class="pmg__benefit-icon" src="https://www.schoolist.co.il/wp-content/uploads/2026/06/gift.svg" alt="" width="44" height="44" />
-			<div class="pmg__benefit-body">
-				<h3 class="pmg__benefit-title"><?php esc_html_e( 'המתנה המושלמת עבורכם', 'pillow-mockup-generator' ); ?></h3>
-				<p class="pmg__benefit-text"><?php esc_html_e( 'פריט ייחודי ומרגש שכיף לתת ועוד יותר כיף לקבל. סגירת פינה מושלמת לכל אירוע.', 'pillow-mockup-generator' ); ?></p>
-			</div>
-		</li>
-	</ul>
-
 	<div class="pmg__stage">
 
 		<!-- Upload (Mixtiles-style empty frame + add button) -->
@@ -211,6 +187,30 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 		</div>
 
 	</div>
+
+	<ul class="pmg__benefits">
+		<li class="pmg__benefit">
+			<img class="pmg__benefit-icon" src="https://www.schoolist.co.il/wp-content/uploads/2026/06/sewing.svg" alt="" width="44" height="44" />
+			<div class="pmg__benefit-body">
+				<h3 class="pmg__benefit-title"><?php esc_html_e( 'תפירה ידנית קפדנית', 'pillow-mockup-generator' ); ?></h3>
+				<p class="pmg__benefit-text"><?php esc_html_e( 'כל מוצר מיוצר ביד דקה ובתשומת לב מלאה לפרטים הקטנים ביותר, בשביל איכות גימור ללא פשרות.', 'pillow-mockup-generator' ); ?></p>
+			</div>
+		</li>
+		<li class="pmg__benefit">
+			<img class="pmg__benefit-icon" src="https://www.schoolist.co.il/wp-content/uploads/2026/06/paint-bucket.svg" alt="" width="44" height="44" />
+			<div class="pmg__benefit-body">
+				<h3 class="pmg__benefit-title"><?php esc_html_e( 'הדפסה איכותית', 'pillow-mockup-generator' ); ?></h3>
+				<p class="pmg__benefit-text"><?php esc_html_e( 'צבעים חיים ועמידים שלא דוהים בכביסה או בשימוש ממושך. המוצר שלך יישאר כמו חדש לאורך זמן.', 'pillow-mockup-generator' ); ?></p>
+			</div>
+		</li>
+		<li class="pmg__benefit">
+			<img class="pmg__benefit-icon" src="https://www.schoolist.co.il/wp-content/uploads/2026/06/gift.svg" alt="" width="44" height="44" />
+			<div class="pmg__benefit-body">
+				<h3 class="pmg__benefit-title"><?php esc_html_e( 'המתנה המושלמת עבורכם', 'pillow-mockup-generator' ); ?></h3>
+				<p class="pmg__benefit-text"><?php esc_html_e( 'פריט ייחודי ומרגש שכיף לתת ועוד יותר כיף לקבל. סגירת פינה מושלמת לכל אירוע.', 'pillow-mockup-generator' ); ?></p>
+			</div>
+		</li>
+	</ul>
 
 	<!-- Upload modal (opens from the + button, Mixtiles-style) -->
 	<div class="pmg__modal" data-pmg-modal hidden>
