@@ -88,6 +88,8 @@ class PMG_Activator {
 			phone varchar(64) NOT NULL DEFAULT '',
 			email varchar(191) NOT NULL DEFAULT '',
 			status varchar(32) NOT NULL DEFAULT 'new',
+			address varchar(191) NOT NULL DEFAULT '',
+			city varchar(128) NOT NULL DEFAULT '',
 			attempts int(10) unsigned NOT NULL DEFAULT 0,
 			original_image text NULL,
 			mockup_image text NULL,

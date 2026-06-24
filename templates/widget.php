@@ -165,6 +165,22 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 					<span class="pmg__error" data-pmg-error="email"></span>
 				</div>
 
+				<div class="pmg__field">
+					<div class="pmg__input-wrap">
+						<input class="pmg__input" type="text" id="pmg-address" name="address" autocomplete="street-address" placeholder=" " data-pmg-input="address" />
+						<label class="pmg__label" for="pmg-address"><?php echo esc_html( $settings['text_address'] ); ?></label>
+					</div>
+					<span class="pmg__error" data-pmg-error="address"></span>
+				</div>
+
+				<div class="pmg__field">
+					<div class="pmg__input-wrap">
+						<input class="pmg__input" type="text" id="pmg-city" name="city" autocomplete="address-level2" placeholder=" " data-pmg-input="city" />
+						<label class="pmg__label" for="pmg-city"><?php echo esc_html( $settings['text_city'] ); ?></label>
+					</div>
+					<span class="pmg__error" data-pmg-error="city"></span>
+				</div>
+
 				<div class="pmg__form-actions">
 					<button type="button" class="pmg__btn pmg__btn--ghost" data-pmg-action="back-to-size"><?php esc_html_e( 'חזרה', 'pillow-mockup-generator' ); ?></button>
 					<button type="submit" class="pmg__btn pmg__btn--primary" data-pmg-submit><?php echo esc_html( $settings['text_submit'] ); ?></button>

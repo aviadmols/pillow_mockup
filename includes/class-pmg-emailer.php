@@ -132,6 +132,13 @@ class PMG_Emailer {
 			__( 'Status', 'pillow-mockup-generator' )   => $lead['status'],
 		);
 
+		if ( ! empty( $lead['address'] ) ) {
+			$rows[ __( 'Address', 'pillow-mockup-generator' ) ] = $lead['address'];
+		}
+		if ( ! empty( $lead['city'] ) ) {
+			$rows[ __( 'City', 'pillow-mockup-generator' ) ] = $lead['city'];
+		}
+
 		if ( ! empty( $lead['size'] ) ) {
 			$rows[ __( 'Size', 'pillow-mockup-generator' ) ] = $lead['size'];
 		}

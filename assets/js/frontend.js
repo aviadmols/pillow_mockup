@@ -682,14 +682,18 @@
 		var lastName = get('last_name');
 		var phone = get('phone');
 		var email = get('email');
+		var address = get('address');
+		var city = get('city');
 
-		['first_name', 'last_name', 'phone', 'email'].forEach(function (f) { self.fieldError(f, ''); });
+		['first_name', 'last_name', 'phone', 'email', 'address', 'city'].forEach(function (f) { self.fieldError(f, ''); });
 
 		var valid = true;
 		if (!firstName) { this.fieldError('first_name', '•'); valid = false; }
 		if (!lastName) { this.fieldError('last_name', '•'); valid = false; }
 		if (!phone) { this.fieldError('phone', '•'); valid = false; }
 		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { this.fieldError('email', '•'); valid = false; }
+		if (!address) { this.fieldError('address', '•'); valid = false; }
+		if (!city) { this.fieldError('city', '•'); valid = false; }
 		if (!valid) {
 			return;
 		}
@@ -702,7 +706,9 @@
 			first_name: firstName,
 			last_name: lastName,
 			phone: phone,
-			email: email
+			email: email,
+			address: address,
+			city: city
 		}).then(function (res) {
 			self.busy(false);
 			var d = res.data;

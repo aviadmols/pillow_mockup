@@ -401,6 +401,12 @@ class PMG_Admin {
 				<tr><th><?php esc_html_e( 'Name', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['name'] ); ?></td></tr>
 				<tr><th><?php esc_html_e( 'Email', 'pillow-mockup-generator' ); ?></th><td><a href="mailto:<?php echo esc_attr( $lead['email'] ); ?>"><?php echo esc_html( $lead['email'] ); ?></a></td></tr>
 				<tr><th><?php esc_html_e( 'Phone', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['phone'] ); ?></td></tr>
+				<?php if ( ! empty( $lead['address'] ) ) : ?>
+					<tr><th><?php esc_html_e( 'Address', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['address'] ); ?></td></tr>
+				<?php endif; ?>
+				<?php if ( ! empty( $lead['city'] ) ) : ?>
+					<tr><th><?php esc_html_e( 'City', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['city'] ); ?></td></tr>
+				<?php endif; ?>
 				<tr><th><?php esc_html_e( 'Status', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['status'] ); ?></td></tr>
 				<?php if ( ! empty( $lead['size'] ) ) : ?>
 					<tr><th><?php esc_html_e( 'Size', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['size'] ); ?></td></tr>
@@ -653,6 +659,8 @@ class PMG_Admin {
 						'text_last_name'     => __( 'Last name field label', 'pillow-mockup-generator' ),
 						'text_phone'         => __( 'Phone field label', 'pillow-mockup-generator' ),
 						'text_email'         => __( 'Email field label', 'pillow-mockup-generator' ),
+						'text_address'       => __( 'Address field label', 'pillow-mockup-generator' ),
+						'text_city'          => __( 'City field label', 'pillow-mockup-generator' ),
 						'text_submit'        => __( 'Details submit label', 'pillow-mockup-generator' ),
 						'text_max_reached'   => __( 'Max-tries message', 'pillow-mockup-generator' ),
 						'text_done_title'    => __( 'Thank-you title', 'pillow-mockup-generator' ),

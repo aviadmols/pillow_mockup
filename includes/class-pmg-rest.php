@@ -239,6 +239,8 @@ class PMG_Rest {
 		$last_name  = sanitize_text_field( (string) $request->get_param( 'last_name' ) );
 		$phone      = sanitize_text_field( (string) $request->get_param( 'phone' ) );
 		$email      = sanitize_email( (string) $request->get_param( 'email' ) );
+		$address    = sanitize_text_field( (string) $request->get_param( 'address' ) );
+		$city       = sanitize_text_field( (string) $request->get_param( 'city' ) );
 
 		// Combine into the full name stored on the lead (with backward compatibility).
 		$name = trim( $first_name . ' ' . $last_name );
@@ -258,6 +260,12 @@ class PMG_Rest {
 		}
 		if ( ! is_email( $email ) ) {
 			$errors['email'] = __( 'A valid email is required.', 'pillow-mockup-generator' );
+		}
+		if ( '' === $address ) {
+			$errors['address'] = __( 'Address is required.', 'pillow-mockup-generator' );
+		}
+		if ( '' === $city ) {
+			$errors['city'] = __( 'City is required.', 'pillow-mockup-generator' );
 		}
 		if ( $errors ) {
 			return new WP_REST_Response(
@@ -279,6 +287,8 @@ class PMG_Rest {
 				'name'           => $name,
 				'phone'          => $phone,
 				'email'          => $email,
+				'address'        => $address,
+				'city'           => $city,
 				'status'         => 'new',
 				'attempts'       => PMG_Leads::count_generations( $session, 'mockup', 'success' ),
 				'original_image' => isset( $work['original_url'] ) ? $work['original_url'] : '',

@@ -151,6 +151,8 @@ class PMG_Settings {
 			'text_last_name'    => 'שם משפחה',
 			'text_phone'        => 'טלפון',
 			'text_email'        => 'אימייל',
+			'text_address'      => 'כתובת',
+			'text_city'         => 'עיר',
 			'text_submit'       => 'המשך',
 			'text_attempts_left'=> 'ניסיונות נותרו',
 			'text_max_reached'  => 'הגעתם למספר הניסיונות המרבי. בחרו את התוצאה האהובה עליכם כדי להמשיך.',
