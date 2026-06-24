@@ -79,6 +79,9 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 
 		<!-- Size selection -->
 		<div class="pmg__panel pmg__panel--size" data-panel="size">
+			<figure class="pmg__size-preview" data-pmg-size-preview-wrap hidden>
+				<img class="pmg__size-preview-img" src="" alt="<?php esc_attr_e( 'התמונה שנבחרה', 'pillow-mockup-generator' ); ?>" data-pmg-size-preview />
+			</figure>
 			<h3 class="pmg__size-title"><?php echo esc_html( $settings['text_size_title'] ); ?></h3>
 			<?php
 			$pmg_sizes    = PMG_Settings::sizes();
@@ -108,6 +111,7 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 					</button>
 				<?php endforeach; ?>
 			</div>
+			<img class="pmg__size-figure" src="<?php echo esc_url( PMG_PLUGIN_URL . 'assets/images/sizes-comparison.png' ); ?>" alt="<?php esc_attr_e( 'השוואת גדלים — קטן, בינוני וגדול', 'pillow-mockup-generator' ); ?>" loading="lazy" />
 			<p class="pmg__shipping">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h2"/><path d="M14 9h4l3 3v5a1 1 0 0 1-1 1h-1"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg>
 				<span><?php esc_html_e( 'משלוח חינם עד הבית', 'pillow-mockup-generator' ); ?></span>

@@ -946,6 +946,40 @@
 	text-align: center;
 }
 
+/* In the size step the chosen mockup replaces the page header */
+.pmg[data-state="size"] .pmg__head {
+	display: none;
+}
+
+.pmg__size-preview {
+	margin: 0 0 clamp(18px, 4vw, 28px);
+	padding: 0;
+	text-align: center;
+}
+
+.pmg__size-preview[hidden] {
+	display: none;
+}
+
+.pmg__size-preview-img {
+	display: inline-block;
+	max-width: min(320px, 80%);
+	max-height: 38vh;
+	width: auto;
+	height: auto;
+	border-radius: var(--pmg-radius);
+	box-shadow: var(--pmg-shadow);
+}
+
+/* Sizes comparison illustration under the size list */
+.pmg__size-figure {
+	display: block;
+	width: 100%;
+	height: auto;
+	margin: 0 0 20px;
+	border-radius: var(--pmg-radius);
+}
+
 .pmg__size-title {
 	margin: 0 0 18px;
 	font-size: 20px;

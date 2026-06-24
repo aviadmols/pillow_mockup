@@ -160,6 +160,8 @@
 			lottie: root.querySelector('[data-pmg-lottie]'),
 			loadingText: root.querySelector('[data-pmg-loading-text]'),
 			gallery: root.querySelector('[data-pmg-gallery]'),
+			sizePreview: root.querySelector('[data-pmg-size-preview]'),
+			sizePreviewWrap: root.querySelector('[data-pmg-size-preview-wrap]'),
 			uploadNotice: root.querySelector('[data-pmg-upload-notice]'),
 			previewNotice: root.querySelector('[data-pmg-preview-notice]'),
 			orderSummary: root.querySelector('[data-pmg-order-summary]'),
@@ -445,7 +447,25 @@
 
 	Widget.prototype.openSize = function () {
 		this.notice(this.els.previewNotice, '');
+		this.showSizePreview();
 		this.setState('size');
+	};
+
+	/**
+	 * Mirror the chosen mockup at the top of the size step (replaces the header).
+	 */
+	Widget.prototype.showSizePreview = function () {
+		if (!this.els.sizePreview || !this.els.sizePreviewWrap) {
+			return;
+		}
+		var url = this.state.selectedUrl;
+		if (url) {
+			this.els.sizePreview.src = url;
+			this.els.sizePreviewWrap.hidden = false;
+		} else {
+			this.els.sizePreview.removeAttribute('src');
+			this.els.sizePreviewWrap.hidden = true;
+		}
 	};
 
 	Widget.prototype.selectSize = function (el) {
