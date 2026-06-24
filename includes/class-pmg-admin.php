@@ -236,6 +236,31 @@ class PMG_Admin {
 				</tbody>
 			</table>
 
+			<h2><?php esc_html_e( 'Recent failed generations', 'pillow-mockup-generator' ); ?></h2>
+			<?php if ( empty( $stats['errors'] ) ) : ?>
+				<p class="pmg-hint"><?php esc_html_e( 'No failed generations yet.', 'pillow-mockup-generator' ); ?></p>
+			<?php else : ?>
+				<?php $pmg_errors = PMG_Leads::recent_errors( 20 ); ?>
+				<table class="widefat striped pmg-table">
+					<thead><tr>
+						<th><?php esc_html_e( 'Date', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'Stage', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'Model', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'Error', 'pillow-mockup-generator' ); ?></th>
+					</tr></thead>
+					<tbody>
+					<?php foreach ( $pmg_errors as $pmg_err ) : ?>
+						<tr>
+							<td><?php echo esc_html( mysql2date( get_option( 'date_format' ) . ' H:i', $pmg_err['created_at'] ) ); ?></td>
+							<td><?php echo esc_html( $pmg_err['type'] ); ?></td>
+							<td><?php echo esc_html( $pmg_err['model'] ); ?></td>
+							<td><?php echo '' !== (string) $pmg_err['error_message'] ? esc_html( $pmg_err['error_message'] ) : '—'; ?></td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+
 			<div class="pmg-cards">
 				<div class="pmg-card"><span class="pmg-card-label"><?php esc_html_e( 'Total registrants', 'pillow-mockup-generator' ); ?></span><span class="pmg-card-value"><?php echo esc_html( number_format_i18n( $stats['total_leads'] ) ); ?></span></div>
 				<div class="pmg-card"><span class="pmg-card-label"><?php esc_html_e( 'Completed selections', 'pillow-mockup-generator' ); ?></span><span class="pmg-card-value"><?php echo esc_html( number_format_i18n( $stats['completed_leads'] ) ); ?></span></div>
@@ -573,6 +598,24 @@ class PMG_Admin {
 					<tr>
 						<th><label for="pmg_customer_message"><?php esc_html_e( 'Customer email message', 'pillow-mockup-generator' ); ?></label></th>
 						<td><textarea id="pmg_customer_message" name="pmg[customer_message]" rows="4" class="large-text"><?php echo esc_textarea( $s['customer_message'] ); ?></textarea></td>
+					</tr>
+				</table>
+
+				<h2><?php esc_html_e( 'Facebook Pixel', 'pillow-mockup-generator' ); ?></h2>
+				<table class="form-table" role="presentation">
+					<tr>
+						<th><label for="pmg_fb_pixel_id"><?php esc_html_e( 'Pixel ID', 'pillow-mockup-generator' ); ?></label></th>
+						<td>
+							<input type="text" id="pmg_fb_pixel_id" name="pmg[fb_pixel_id]" value="<?php echo esc_attr( $s['fb_pixel_id'] ); ?>" class="regular-text" />
+							<p class="description"><?php esc_html_e( 'Optional. When an order is completed, a Facebook "Purchase" event is fired. Leave empty if your site already loads the Pixel (via the theme or GTM) — the event will still be sent. Set the Pixel ID here only if you want this plugin to load the Pixel itself.', 'pillow-mockup-generator' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="pmg_fb_currency"><?php esc_html_e( 'Purchase currency code', 'pillow-mockup-generator' ); ?></label></th>
+						<td>
+							<input type="text" id="pmg_fb_currency" name="pmg[fb_currency]" value="<?php echo esc_attr( $s['fb_currency'] ); ?>" class="small-text" maxlength="3" />
+							<p class="description"><?php esc_html_e( 'ISO currency code sent with the Purchase event (e.g. ILS, USD, EUR).', 'pillow-mockup-generator' ); ?></p>
+						</td>
 					</tr>
 				</table>
 

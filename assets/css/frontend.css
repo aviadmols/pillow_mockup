@@ -962,13 +962,13 @@
 }
 
 .pmg__size-preview-img {
-	display: inline-block;
-	max-width: min(320px, 80%);
-	max-height: 38vh;
-	width: auto;
-	height: auto;
-	border-radius: var(--pmg-radius);
-	box-shadow: var(--pmg-shadow);
+	display: inline-block !important;
+	max-width: min(320px, 80%) !important;
+	max-height: 38vh !important;
+	width: auto !important;
+	height: auto !important;
+	border-radius: var(--pmg-radius) !important;
+	box-shadow: var(--pmg-shadow) !important;
 }
 
 /* Sizes comparison illustration under the size list */

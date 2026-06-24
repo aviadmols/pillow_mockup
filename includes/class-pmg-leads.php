@@ -184,6 +184,7 @@ class PMG_Leads {
 			'status'            => isset( $data['status'] ) ? (string) $data['status'] : 'success',
 			'generation_id'     => isset( $data['generation_id'] ) ? (string) $data['generation_id'] : '',
 			'image_url'         => isset( $data['image_url'] ) ? esc_url_raw( (string) $data['image_url'] ) : '',
+			'error_message'     => isset( $data['error_message'] ) ? sanitize_textarea_field( (string) $data['error_message'] ) : '',
 			'created_at'        => self::now(),
 		);
 
@@ -246,6 +247,27 @@ class PMG_Leads {
 		global $wpdb;
 		$table = PMG_Activator::generations_table();
 		return (float) $wpdb->get_var( $wpdb->prepare( "SELECT COALESCE(SUM(cost),0) FROM {$table} WHERE session = %s", $session ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	}
+
+	/**
+	 * Most recent failed generation attempts, newest first.
+	 *
+	 * @param int $limit Max rows to return.
+	 * @return array[] Rows with created_at, type, model, error_message.
+	 */
+	public static function recent_errors( $limit = 20 ) {
+		global $wpdb;
+		$table = PMG_Activator::generations_table();
+		$limit = max( 1, absint( $limit ) );
+		$rows  = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT created_at, type, model, error_message FROM {$table} WHERE status = %s ORDER BY id DESC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				'error',
+				$limit
+			),
+			ARRAY_A
+		);
+		return is_array( $rows ) ? $rows : array();
 	}
 
 	/**

@@ -148,6 +148,7 @@
 			size: null
 		};
 		this.lottie = null;
+		this.purchaseTracked = false;
 
 		this.els = {
 			file: root.querySelector('[data-pmg-file]'),
@@ -756,12 +757,68 @@
 				self.setState('details');
 				return;
 			}
+			self.trackPurchase();
 			self.setState('done');
 		}).catch(function () {
 			self.busy(false);
 			self.notice(self.els.formNotice, CFG.i18n.genericError);
 			self.setState('details');
 		});
+	};
+
+	/**
+	 * Ensure a Facebook Pixel instance exists. If the page already loads `fbq`
+	 * (theme / GTM) we reuse it; otherwise we inject the base code and init it
+	 * with the configured Pixel ID. Returns true when `fbq` is available.
+	 */
+	Widget.prototype.ensureFbq = function () {
+		if (typeof window.fbq === 'function') {
+			return true;
+		}
+		var pixelId = CFG.fbPixelId ? String(CFG.fbPixelId).trim() : '';
+		if (!pixelId) {
+			return false;
+		}
+		/* eslint-disable */
+		!function (f, b, e, v, n, t, s) {
+			if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+			if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
+			t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
+		}(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+		/* eslint-enable */
+		try {
+			window.fbq('init', pixelId);
+			window.fbq('track', 'PageView');
+		} catch (e) {
+			return false;
+		}
+		return typeof window.fbq === 'function';
+	};
+
+	/**
+	 * Fire a Facebook "Purchase" event once an order is completed. Safe no-op
+	 * when no Pixel is present and none is configured. Fires at most once.
+	 */
+	Widget.prototype.trackPurchase = function () {
+		if (this.purchaseTracked) {
+			return;
+		}
+		if (!this.ensureFbq()) {
+			return;
+		}
+		var size = this.state.size || {};
+		var value = parseFloat(size.price) || 0;
+		var payload = {
+			value: value,
+			currency: CFG.fbCurrency || 'ILS'
+		};
+		if (size.label) {
+			payload.content_name = size.label;
+		}
+		try {
+			window.fbq('track', 'Purchase', payload);
+			this.purchaseTracked = true;
+		} catch (e) {}
 	};
 
 	/**

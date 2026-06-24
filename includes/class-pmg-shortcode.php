@@ -92,6 +92,8 @@ class PMG_Shortcode {
 				'attemptsLabel' => (string) PMG_Settings::get( 'text_attempts_left', 'attempts left' ),
 				'maxMockups'    => (int) PMG_Settings::get( 'max_mockups', 3 ),
 				'priceCurrency' => (string) PMG_Settings::get( 'price_currency', '₪' ),
+				'fbPixelId'     => (string) PMG_Settings::get( 'fb_pixel_id', '' ),
+				'fbCurrency'    => (string) PMG_Settings::get( 'fb_currency', 'ILS' ),
 				'i18n'      => array(
 					'genericError'   => __( 'אירעה תקלה. נסו שנית.', 'pillow-mockup-generator' ),
 					'generateFailed' => __( 'יצירת המוקאפ נכשלה. נסו שנית.', 'pillow-mockup-generator' ),

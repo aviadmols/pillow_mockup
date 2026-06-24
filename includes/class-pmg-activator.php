@@ -116,6 +116,7 @@ class PMG_Activator {
 			status varchar(20) NOT NULL DEFAULT 'success',
 			generation_id varchar(128) NOT NULL DEFAULT '',
 			image_url text NULL,
+			error_message text NULL,
 			created_at datetime NOT NULL,
 			PRIMARY KEY  (id),
 			KEY session (session),

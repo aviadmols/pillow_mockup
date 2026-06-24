@@ -109,6 +109,9 @@ class PMG_Settings {
 			'price_currency'    => '₪',
 			'font_family'       => '',
 			'lottie_url'        => '',
+			// Facebook Pixel (purchase tracking on order completion).
+			'fb_pixel_id'       => '',
+			'fb_currency'       => 'ILS',
 			// Sizes & pricing (customer facing).
 			'size_small_label'    => 'קטן',
 			'size_small_cm'       => '15',

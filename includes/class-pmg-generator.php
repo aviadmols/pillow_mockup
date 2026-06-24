@@ -61,11 +61,12 @@ class PMG_Generator {
 		if ( is_wp_error( $result ) ) {
 			PMG_Leads::log_generation(
 				array(
-					'session' => $session,
-					'lead_id' => $lead_id,
-					'type'    => $type,
-					'model'   => $model,
-					'status'  => 'error',
+					'session'       => $session,
+					'lead_id'       => $lead_id,
+					'type'          => $type,
+					'model'         => $model,
+					'status'        => 'error',
+					'error_message' => $result->get_error_code() . ': ' . $result->get_error_message(),
 				)
 			);
 			return $result;
@@ -82,6 +83,7 @@ class PMG_Generator {
 					'cost'          => $result['cost'],
 					'generation_id' => $result['generation_id'],
 					'status'        => 'error',
+					'error_message' => $saved->get_error_code() . ': ' . $saved->get_error_message(),
 				)
 			);
 			return $saved;
