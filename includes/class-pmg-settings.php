@@ -106,26 +106,26 @@ class PMG_Settings {
 			'enable_cutout'     => 1,
 			'admin_email'       => get_option( 'admin_email' ),
 			'currency'          => '$',
-			'price_currency'    => '₪',
+			'price_currency'    => '$',
 			'font_family'       => '',
 			'lottie_url'        => '',
 			// Facebook Pixel (purchase tracking on order completion).
 			'fb_pixel_id'       => '',
-			'fb_currency'       => 'ILS',
+			'fb_currency'       => 'USD',
 			// Sizes & pricing (customer facing).
-			'size_small_label'    => 'קטן',
-			'size_small_cm'       => '15',
-			'size_small_price'    => '99',
-			'size_small_compare'  => '129',
-			'size_medium_label'   => 'בינוני',
-			'size_medium_cm'      => '25',
-			'size_medium_price'   => '149',
-			'size_medium_compare' => '199',
-			'size_large_label'    => 'גדול',
-			'size_large_cm'       => '40',
-			'size_large_price'    => '229',
-			'size_large_compare'  => '299',
-			'text_size_title'     => 'בחרו גודל',
+			'size_small_label'    => 'Small',
+			'size_small_cm'       => '10"×10"',
+			'size_small_price'    => '39.99',
+			'size_small_compare'  => '49.99',
+			'size_medium_label'   => 'Medium',
+			'size_medium_cm'      => '16"×16"',
+			'size_medium_price'   => '69.99',
+			'size_medium_compare' => '79.99',
+			'size_large_label'    => 'Large',
+			'size_large_cm'       => '22"×22"',
+			'size_large_price'    => '99.99',
+			'size_large_compare'  => '119.99',
+			'text_size_title'     => 'Choose your size',
 			'max_upload_px'     => 1280,
 			'site_title'        => get_bloginfo( 'name' ),
 			'mockup_prompt'     => self::default_mockup_prompt(),
@@ -218,6 +218,51 @@ class PMG_Settings {
 
 		update_option( PMG_OPTION_KEY, $stored );
 		update_option( 'pmg_texts_he_migrated', 1 );
+		self::$cache = null;
+	}
+
+	/**
+	 * One-time migration for the on1y.one English/LTR redesign: force the size
+	 * tiers, currency symbol and size-step title onto the new USD defaults so
+	 * existing installs (which stored Hebrew labels and ₪) reflect the new
+	 * English pricing immediately. Runs once, guarded by an option flag.
+	 *
+	 * @return void
+	 */
+	public static function maybe_migrate_sizes_en() {
+		if ( get_option( 'pmg_sizes_en_migrated' ) ) {
+			return;
+		}
+
+		$stored = get_option( PMG_OPTION_KEY, array() );
+		$stored = is_array( $stored ) ? $stored : array();
+		$new    = self::defaults();
+
+		$force_keys = array(
+			'currency',
+			'price_currency',
+			'fb_currency',
+			'size_small_label',
+			'size_small_cm',
+			'size_small_price',
+			'size_small_compare',
+			'size_medium_label',
+			'size_medium_cm',
+			'size_medium_price',
+			'size_medium_compare',
+			'size_large_label',
+			'size_large_cm',
+			'size_large_price',
+			'size_large_compare',
+			'text_size_title',
+		);
+
+		foreach ( $force_keys as $key ) {
+			$stored[ $key ] = $new[ $key ];
+		}
+
+		update_option( PMG_OPTION_KEY, $stored );
+		update_option( 'pmg_sizes_en_migrated', 1 );
 		self::$cache = null;
 	}
 

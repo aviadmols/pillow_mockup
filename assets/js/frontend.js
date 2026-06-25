@@ -153,8 +153,10 @@
 		this.els = {
 			file: root.querySelector('[data-pmg-file]'),
 			dropzone: root.querySelector('[data-pmg-dropzone]'),
-			modal: root.querySelector('[data-pmg-modal]'),
-			uploadOption: root.querySelector('[data-pmg-upload]'),
+			sticky: root.querySelector('[data-pmg-sticky]'),
+			reviewsTrack: root.querySelector('[data-pmg-reviews-track]'),
+			reviewsWrap: root.querySelector('[data-pmg-reviews-wrap]'),
+			reviewsDots: root.querySelector('[data-pmg-reviews-dots]'),
 			lightbox: root.querySelector('[data-pmg-lightbox]'),
 			zoomImg: root.querySelector('[data-pmg-zoom-img]'),
 			result: root.querySelector('[data-pmg-result]'),
@@ -264,39 +266,27 @@
 		if (this.els.file) {
 			this.els.file.addEventListener('change', function () {
 				if (this.files && this.files[0]) {
-					self.closeModal();
 					self.handleFile(this.files[0]);
 				}
 			});
 		}
 
-		// Upload modal: open from the + button / frame, close on backdrop or X.
-		this.root.querySelectorAll('[data-pmg-open-modal]').forEach(function (el) {
+		// Direct native file picker: any [data-pmg-pick] element opens the file dialog.
+		this.root.querySelectorAll('[data-pmg-pick]').forEach(function (el) {
 			el.addEventListener('click', function () {
-				self.openModal();
-			});
-			el.addEventListener('keydown', function (e) {
-				if (e.key === 'Enter' || e.key === ' ') {
-					e.preventDefault();
-					self.openModal();
-				}
-			});
-		});
-		this.root.querySelectorAll('[data-pmg-close-modal]').forEach(function (el) {
-			el.addEventListener('click', function () {
-				self.closeModal();
-			});
-		});
-		if (this.els.uploadOption) {
-			this.els.uploadOption.addEventListener('click', function () {
 				if (self.els.file) {
 					self.els.file.click();
 				}
 			});
-		}
+			el.addEventListener('keydown', function (e) {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					self.els.file && self.els.file.click();
+				}
+			});
+		});
 		document.addEventListener('keydown', function (e) {
 			if (e.key === 'Escape') {
-				self.closeModal();
 				self.closeZoom();
 			}
 		});
@@ -371,18 +361,166 @@
 				self.submitLead();
 			});
 		}
+
+		// Marketing landing widgets.
+		this.initReviews();
+		this.initStickyCta();
 	};
 
-	Widget.prototype.openModal = function () {
-		if (this.els.modal) {
-			this.els.modal.hidden = false;
+	/**
+	 * Reviews carousel (4 cards on desktop, 8 on mobile) with dots, autoplay
+	 * and touch/drag support. Fully scoped to this widget instance.
+	 */
+	Widget.prototype.initReviews = function () {
+		var self = this;
+		var track = this.els.reviewsTrack;
+		var dotsContainer = this.els.reviewsDots;
+		var wrapper = this.els.reviewsWrap;
+		if (!track || !dotsContainer || !wrapper) {
+			return;
 		}
+
+		var slides = Array.prototype.slice.call(track.children);
+		var currentIndex = 0;
+		var startX = 0;
+		var currentTranslate = 0;
+		var prevTranslate = 0;
+		var isDragging = false;
+		var autoSlideInterval = null;
+		var isMobile = window.innerWidth <= 580;
+
+		function totalSlides() {
+			return isMobile ? 8 : 4;
+		}
+
+		function layout() {
+			isMobile = window.innerWidth <= 580;
+			dotsContainer.innerHTML = '';
+
+			if (isMobile) {
+				track.style.width = '800%';
+				slides.forEach(function (slide) {
+					slide.style.width = '12.5%';
+					slide.style.padding = '0';
+				});
+			} else {
+				track.style.width = '200%';
+				slides.forEach(function (slide) {
+					slide.style.width = '25%';
+					slide.style.padding = '0 10px';
+				});
+			}
+
+			var total = totalSlides();
+			for (var i = 0; i < total; i++) {
+				var dot = document.createElement('div');
+				dot.className = 'pmg__dot' + (i === 0 ? ' is-active' : '');
+				(function (index) {
+					dot.addEventListener('click', function () {
+						update(index);
+						resetAuto();
+					});
+				})(i);
+				dotsContainer.appendChild(dot);
+			}
+			update(0);
+		}
+
+		function update(index) {
+			var total = totalSlides();
+			if (index >= total) index = 0;
+			if (index < 0) index = total - 1;
+			currentIndex = index;
+			var percentage = isMobile ? 12.5 : 25;
+			track.style.transform = 'translateX(-' + (currentIndex * percentage) + '%)';
+			var dots = Array.prototype.slice.call(dotsContainer.children);
+			dots.forEach(function (dot, i) {
+				dot.classList.toggle('is-active', i === currentIndex);
+			});
+			prevTranslate = -currentIndex * (wrapper.offsetWidth / (isMobile ? 1 : 2));
+		}
+
+		function startAuto() {
+			autoSlideInterval = setInterval(function () {
+				update((currentIndex + 1) % totalSlides());
+			}, 5000);
+		}
+
+		function resetAuto() {
+			clearInterval(autoSlideInterval);
+			startAuto();
+		}
+
+		function getX(event) {
+			return event.type.indexOf('mouse') !== -1 ? event.pageX : event.touches[0].clientX;
+		}
+
+		function touchStart(event) {
+			isDragging = true;
+			startX = getX(event);
+			clearInterval(autoSlideInterval);
+		}
+
+		function touchMove(event) {
+			if (!isDragging) return;
+			currentTranslate = prevTranslate + (getX(event) - startX);
+		}
+
+		function touchEnd() {
+			if (!isDragging) return;
+			isDragging = false;
+			var movedBy = currentTranslate - prevTranslate;
+			if (movedBy < -50 && currentIndex < totalSlides() - 1) {
+				currentIndex += 1;
+			} else if (movedBy > 50 && currentIndex > 0) {
+				currentIndex -= 1;
+			}
+			update(currentIndex);
+			startAuto();
+		}
+
+		wrapper.addEventListener('touchstart', touchStart, { passive: true });
+		wrapper.addEventListener('touchend', touchEnd);
+		wrapper.addEventListener('touchmove', touchMove, { passive: true });
+		wrapper.addEventListener('mousedown', touchStart);
+		wrapper.addEventListener('mouseup', touchEnd);
+		wrapper.addEventListener('mouseleave', touchEnd);
+		wrapper.addEventListener('mousemove', touchMove);
+
+		var resizeTimeout;
+		window.addEventListener('resize', function () {
+			clearTimeout(resizeTimeout);
+			resizeTimeout = setTimeout(function () {
+				if ((window.innerWidth <= 580) !== isMobile) {
+					layout();
+					resetAuto();
+				}
+			}, 100);
+		});
+
+		layout();
+		startAuto();
 	};
 
-	Widget.prototype.closeModal = function () {
-		if (this.els.modal) {
-			this.els.modal.hidden = true;
+	/**
+	 * Sticky upload CTA on mobile: reveals once the upload area scrolls out of
+	 * view, but only while the widget is still on the upload screen.
+	 */
+	Widget.prototype.initStickyCta = function () {
+		var self = this;
+		var sticky = this.els.sticky;
+		var area = this.els.dropzone;
+		if (!sticky || !area) {
+			return;
 		}
+		window.addEventListener('scroll', function () {
+			if (window.innerWidth > 580 || self.root.getAttribute('data-state') !== 'upload') {
+				sticky.classList.remove('is-visible');
+				return;
+			}
+			var rect = area.getBoundingClientRect();
+			sticky.classList.toggle('is-visible', rect.bottom < 0);
+		}, { passive: true });
 	};
 
 	Widget.prototype.openZoom = function () {
@@ -500,10 +638,10 @@
 			return;
 		}
 		var cur = CFG.priceCurrency || '';
-		var sizeText = s.label + (s.cm ? ' · ' + s.cm + ' ' + (CFG.i18n.cmUnit || '') : '');
-		var priceHtml = '<strong>' + cur + ' ' + s.price + '</strong>';
+		var sizeText = s.label + (s.cm ? ' · ' + s.cm : '');
+		var priceHtml = '<strong>' + cur + s.price + '</strong>';
 		if (s.compare && s.compare > s.price) {
-			priceHtml = '<span class="pmg__order-prices"><s class="pmg__order-compare">' + cur + ' ' + s.compare + '</s>' + priceHtml + '</span>';
+			priceHtml = '<span class="pmg__order-prices"><s class="pmg__order-compare">' + cur + s.compare + '</s>' + priceHtml + '</span>';
 		}
 		el.innerHTML = '<span>' + sizeText + '</span>' + priceHtml;
 		el.hidden = false;

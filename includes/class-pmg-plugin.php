@@ -85,5 +85,8 @@ class PMG_Plugin {
 
 		// Switch untouched front-end texts to Hebrew on existing installs (runs once).
 		PMG_Settings::maybe_migrate_texts();
+
+		// Force English/USD sizes & pricing for the on1y.one redesign (runs once).
+		PMG_Settings::maybe_migrate_sizes_en();
 	}
 }

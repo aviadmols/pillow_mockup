@@ -35,10 +35,18 @@ class PMG_Shortcode {
 	 * @return void
 	 */
 	public function register_assets() {
+		// Google Fonts used by the on1y.one design (Bricolage Grotesque + Plus Jakarta Sans).
+		wp_register_style(
+			'pmg-fonts',
+			'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap',
+			array(),
+			null
+		);
+
 		wp_register_style(
 			'pmg-frontend',
 			PMG_PLUGIN_URL . 'assets/css/frontend.css',
-			array(),
+			array( 'pmg-fonts' ),
 			PMG_VERSION
 		);
 
@@ -71,6 +79,7 @@ class PMG_Shortcode {
 		}
 		$this->enqueued = true;
 
+		wp_enqueue_style( 'pmg-fonts' );
 		wp_enqueue_style( 'pmg-frontend' );
 		wp_enqueue_script( 'pmg-lottie' );
 		wp_enqueue_script( 'pmg-frontend' );
@@ -91,15 +100,15 @@ class PMG_Shortcode {
 				'maxPx'         => (int) PMG_Settings::get( 'max_upload_px', 1280 ),
 				'attemptsLabel' => (string) PMG_Settings::get( 'text_attempts_left', 'attempts left' ),
 				'maxMockups'    => (int) PMG_Settings::get( 'max_mockups', 3 ),
-				'priceCurrency' => (string) PMG_Settings::get( 'price_currency', '₪' ),
+				'priceCurrency' => (string) PMG_Settings::get( 'price_currency', '$' ),
 				'fbPixelId'     => (string) PMG_Settings::get( 'fb_pixel_id', '' ),
-				'fbCurrency'    => (string) PMG_Settings::get( 'fb_currency', 'ILS' ),
+				'fbCurrency'    => (string) PMG_Settings::get( 'fb_currency', 'USD' ),
 				'i18n'      => array(
-					'genericError'   => __( 'אירעה תקלה. נסו שנית.', 'pillow-mockup-generator' ),
-					'generateFailed' => __( 'יצירת המוקאפ נכשלה. נסו שנית.', 'pillow-mockup-generator' ),
-					'invalidFile'    => __( 'בחרו קובץ תמונה (JPG, PNG או WEBP).', 'pillow-mockup-generator' ),
-					'maxReached'     => __( 'הגעתם למספר התמונות המרבי.', 'pillow-mockup-generator' ),
-					'cmUnit'         => __( 'ס"מ', 'pillow-mockup-generator' ),
+					'genericError'   => __( 'Something went wrong. Please try again.', 'pillow-mockup-generator' ),
+					'generateFailed' => __( 'We couldn\'t create your mockup. Please try again.', 'pillow-mockup-generator' ),
+					'invalidFile'    => __( 'Please choose an image file (JPG, PNG or WEBP).', 'pillow-mockup-generator' ),
+					'maxReached'     => __( 'You\'ve reached the maximum number of photos.', 'pillow-mockup-generator' ),
+					'cmUnit'         => '',
 				),
 			)
 		);
