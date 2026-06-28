@@ -192,6 +192,8 @@
 		}
 		pmgGlobalBound = true;
 
+		// Capture phase so the click is handled before any theme handler that
+		// might call stopPropagation() on the way up and swallow the trigger.
 		document.addEventListener('click', function (e) {
 			var trigger = e.target.closest ? e.target.closest('.pmg-open, [data-pmg-open]') : null;
 			if (!trigger) {
@@ -218,7 +220,7 @@
 				first.els.file.value = '';
 				first.els.file.click();
 			}
-		});
+		}, true);
 
 		document.addEventListener('keydown', function (e) {
 			if (e.key !== 'Escape') {
@@ -941,17 +943,27 @@
 	};
 
 	// Boot all widgets on the page.
-	document.addEventListener('DOMContentLoaded', function () {
+	function boot() {
 		var roots = document.querySelectorAll('[data-pmg]');
 		if (!roots.length) {
 			return;
 		}
-		// Pull a live nonce up front so the first action works on cached pages.
-		refreshNonce().then(function () {
-			Array.prototype.forEach.call(roots, function (root) {
-				var widget = new Widget(root);
-				widget.restore();
-			});
+		// Pre-warm a fresh nonce in the background. We intentionally do NOT wait
+		// for it: api() self-heals a stale nonce (refresh + retry once), so the
+		// open buttons stay live immediately and the session is restored without
+		// blocking on a network round-trip.
+		refreshNonce();
+		Array.prototype.forEach.call(roots, function (root) {
+			var widget = new Widget(root);
+			widget.restore();
 		});
-	});
+	}
+
+	// Run as soon as the DOM is available — even if DOMContentLoaded already
+	// fired (footer scripts can load late), so the open buttons never stay dead.
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', boot);
+	} else {
+		boot();
+	}
 })();
