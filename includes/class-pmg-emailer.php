@@ -135,8 +135,17 @@ class PMG_Emailer {
 		if ( ! empty( $lead['address'] ) ) {
 			$rows[ __( 'Address', 'pillow-mockup-generator' ) ] = $lead['address'];
 		}
+		if ( ! empty( $lead['apartment'] ) ) {
+			$rows[ __( 'Apartment / suite', 'pillow-mockup-generator' ) ] = $lead['apartment'];
+		}
 		if ( ! empty( $lead['city'] ) ) {
 			$rows[ __( 'City', 'pillow-mockup-generator' ) ] = $lead['city'];
+		}
+		if ( ! empty( $lead['state'] ) ) {
+			$rows[ __( 'State', 'pillow-mockup-generator' ) ] = $lead['state'];
+		}
+		if ( ! empty( $lead['zip'] ) ) {
+			$rows[ __( 'ZIP code', 'pillow-mockup-generator' ) ] = $lead['zip'];
 		}
 
 		if ( ! empty( $lead['size'] ) ) {

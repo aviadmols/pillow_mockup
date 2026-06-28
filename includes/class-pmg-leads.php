@@ -69,7 +69,7 @@ class PMG_Leads {
 		$table    = PMG_Activator::leads_table();
 		$existing = self::get_by_session( $session );
 
-		$allowed = array( 'name', 'phone', 'email', 'address', 'city', 'status', 'attempts', 'original_image', 'mockup_image', 'cutout_image', 'total_cost', 'size', 'price', 'ip' );
+		$allowed = array( 'name', 'phone', 'email', 'address', 'apartment', 'city', 'state', 'zip', 'status', 'attempts', 'original_image', 'mockup_image', 'cutout_image', 'total_cost', 'size', 'price', 'ip' );
 		$payload = array();
 		foreach ( $allowed as $col ) {
 			if ( array_key_exists( $col, $data ) ) {

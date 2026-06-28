@@ -394,7 +394,7 @@ class PMG_Admin {
 		);
 		?>
 		<div class="wrap pmg-wrap">
-			<h1><?php echo esc_html( $lead['name'] ? $lead['name'] : $lead['email'] ); ?></h1>
+			<h1><?php echo esc_html( $lead['name'] ? $lead['name'] : ( $lead['email'] ? $lead['email'] : $lead['phone'] ) ); ?></h1>
 			<p><a href="<?php echo esc_url( $back ); ?>">&larr; <?php esc_html_e( 'Back to registrants', 'pillow-mockup-generator' ); ?></a></p>
 
 			<table class="widefat pmg-detail-table">
@@ -404,8 +404,17 @@ class PMG_Admin {
 				<?php if ( ! empty( $lead['address'] ) ) : ?>
 					<tr><th><?php esc_html_e( 'Address', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['address'] ); ?></td></tr>
 				<?php endif; ?>
+				<?php if ( ! empty( $lead['apartment'] ) ) : ?>
+					<tr><th><?php esc_html_e( 'Apartment / suite', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['apartment'] ); ?></td></tr>
+				<?php endif; ?>
 				<?php if ( ! empty( $lead['city'] ) ) : ?>
 					<tr><th><?php esc_html_e( 'City', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['city'] ); ?></td></tr>
+				<?php endif; ?>
+				<?php if ( ! empty( $lead['state'] ) ) : ?>
+					<tr><th><?php esc_html_e( 'State', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['state'] ); ?></td></tr>
+				<?php endif; ?>
+				<?php if ( ! empty( $lead['zip'] ) ) : ?>
+					<tr><th><?php esc_html_e( 'ZIP code', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['zip'] ); ?></td></tr>
 				<?php endif; ?>
 				<tr><th><?php esc_html_e( 'Status', 'pillow-mockup-generator' ); ?></th><td><?php echo esc_html( $lead['status'] ); ?></td></tr>
 				<?php if ( ! empty( $lead['size'] ) ) : ?>

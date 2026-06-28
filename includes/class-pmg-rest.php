@@ -234,38 +234,27 @@ class PMG_Rest {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function lead( WP_REST_Request $request ) {
-		$session    = $this->resolve_session( $request->get_param( 'session' ) );
-		$first_name = sanitize_text_field( (string) $request->get_param( 'first_name' ) );
-		$last_name  = sanitize_text_field( (string) $request->get_param( 'last_name' ) );
-		$phone      = sanitize_text_field( (string) $request->get_param( 'phone' ) );
-		$email      = sanitize_email( (string) $request->get_param( 'email' ) );
-		$address    = sanitize_text_field( (string) $request->get_param( 'address' ) );
-		$city       = sanitize_text_field( (string) $request->get_param( 'city' ) );
+		$session   = $this->resolve_session( $request->get_param( 'session' ) );
+		$phone     = sanitize_text_field( (string) $request->get_param( 'phone' ) );
+		$address   = sanitize_text_field( (string) $request->get_param( 'address' ) );
+		$apartment = sanitize_text_field( (string) $request->get_param( 'apartment' ) );
+		$city      = sanitize_text_field( (string) $request->get_param( 'city' ) );
+		$state     = sanitize_text_field( (string) $request->get_param( 'state' ) );
+		$zip       = sanitize_text_field( (string) $request->get_param( 'zip' ) );
 
-		// Combine into the full name stored on the lead (with backward compatibility).
-		$name = trim( $first_name . ' ' . $last_name );
+		// Optional contact fields kept for backward compatibility with older forms.
+		$email = sanitize_email( (string) $request->get_param( 'email' ) );
+		$name  = sanitize_text_field( (string) $request->get_param( 'name' ) );
 		if ( '' === $name ) {
-			$name = sanitize_text_field( (string) $request->get_param( 'name' ) );
+			$first_name = sanitize_text_field( (string) $request->get_param( 'first_name' ) );
+			$last_name  = sanitize_text_field( (string) $request->get_param( 'last_name' ) );
+			$name       = trim( $first_name . ' ' . $last_name );
 		}
 
+		// Only the phone is required so we can reach the customer; the rest is optional.
 		$errors = array();
-		if ( '' === $first_name ) {
-			$errors['first_name'] = __( 'First name is required.', 'pillow-mockup-generator' );
-		}
-		if ( '' === $last_name ) {
-			$errors['last_name'] = __( 'Last name is required.', 'pillow-mockup-generator' );
-		}
 		if ( '' === $phone ) {
 			$errors['phone'] = __( 'Phone is required.', 'pillow-mockup-generator' );
-		}
-		if ( ! is_email( $email ) ) {
-			$errors['email'] = __( 'A valid email is required.', 'pillow-mockup-generator' );
-		}
-		if ( '' === $address ) {
-			$errors['address'] = __( 'Address is required.', 'pillow-mockup-generator' );
-		}
-		if ( '' === $city ) {
-			$errors['city'] = __( 'City is required.', 'pillow-mockup-generator' );
 		}
 		if ( $errors ) {
 			return new WP_REST_Response(
@@ -288,7 +277,10 @@ class PMG_Rest {
 				'phone'          => $phone,
 				'email'          => $email,
 				'address'        => $address,
+				'apartment'      => $apartment,
 				'city'           => $city,
+				'state'          => $state,
+				'zip'            => $zip,
 				'status'         => 'new',
 				'attempts'       => PMG_Leads::count_generations( $session, 'mockup', 'success' ),
 				'original_image' => isset( $work['original_url'] ) ? $work['original_url'] : '',

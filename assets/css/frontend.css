@@ -509,10 +509,16 @@ body.pmg-modal-open {
 
 /* Toolbar */
 .pmg__toolbar {
+	position: fixed;
+	inset-inline-start: 50%;
+	inset-block-end: 16px;
+	transform: translateX(-50%);
+	z-index: 5;
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
-	margin-block-start: clamp(18px, 4vw, 28px);
+	margin: 0;
+	max-width: calc(100% - 32px);
 	padding: 10px;
 	background: var(--pmg-paper);
 	border: 1px solid var(--pmg-rule);
@@ -520,6 +526,11 @@ body.pmg-modal-open {
 	box-shadow: var(--pmg-shadow);
 	flex-wrap: nowrap;
 	justify-content: center;
+}
+
+/* Reserve space so the bottom content is never hidden behind the fixed bar. */
+.pmg__panel--preview {
+	padding-block-end: 84px;
 }
 
 .pmg__tool {
@@ -585,7 +596,7 @@ body.pmg-modal-open {
 	font-size: clamp(22px, 3.6vw, 30px);
 	line-height: 1.08;
 	letter-spacing: -0.02em;
-	margin: 0 0 10px;
+	margin: 0 0 10px !important;
 }
 
 .pmg__form-subtitle {
@@ -593,7 +604,7 @@ body.pmg-modal-open {
 	font-size: 15px;
 	line-height: 1.5;
 	color: var(--pmg-muted);
-	margin: 0 auto 24px;
+	margin: 0 auto 24px !important;
 	max-width: 36ch;
 }
 
@@ -682,6 +693,40 @@ body.pmg-modal-open {
 	box-shadow: rgb(235 35 113 / 12%) 0 0 0 4px;
 }
 
+/* State dropdown */
+.pmg__input-wrap--select {
+	position: relative;
+}
+
+.pmg__select {
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	padding-inline-end: 42px;
+	cursor: pointer;
+	line-height: 1.2;
+}
+
+.pmg__select option[value=""] {
+	color: var(--pmg-muted);
+}
+
+.pmg__select-arrow {
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-end: 14px;
+	transform: translateY(-50%);
+	width: 20px;
+	height: 20px;
+	color: var(--pmg-muted);
+	pointer-events: none;
+}
+
+.pmg__select-arrow svg {
+	width: 100%;
+	height: 100%;
+}
+
 .pmg__error {
 	display: block;
 	min-height: 14px;
@@ -712,7 +757,7 @@ body.pmg-modal-open {
 	align-items: center;
 	justify-content: center;
 	gap: 7px;
-	margin-block-start: 18px;
+	margin-top: 12px !important;
 	font-size: 12.5px;
 	color: var(--pmg-muted);
 }
@@ -1037,6 +1082,15 @@ body.pmg-modal-open {
 .pmg.pmg .pmg__input:focus {
 	background: var(--pmg-paper);
 	border-color: var(--pmg-accent);
+}
+
+.pmg.pmg .pmg__select {
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	padding-inline-end: 42px;
+	background-image: none;
+	height: auto;
 }
 
 .pmg.pmg .pmg__thumb {

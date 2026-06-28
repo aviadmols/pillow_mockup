@@ -132,40 +132,6 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 
 						<div class="pmg__order-summary" data-pmg-order-summary hidden></div>
 
-						<div class="pmg__field-row">
-							<div class="pmg__field">
-								<div class="pmg__input-wrap">
-									<input class="pmg__input" type="text" id="pmg-first-name" name="first_name" autocomplete="given-name" placeholder=" " data-pmg-input="first_name" />
-									<label class="pmg__label" for="pmg-first-name"><?php esc_html_e( 'First name', 'pillow-mockup-generator' ); ?></label>
-								</div>
-								<span class="pmg__error" data-pmg-error="first_name"></span>
-							</div>
-
-							<div class="pmg__field">
-								<div class="pmg__input-wrap">
-									<input class="pmg__input" type="text" id="pmg-last-name" name="last_name" autocomplete="family-name" placeholder=" " data-pmg-input="last_name" />
-									<label class="pmg__label" for="pmg-last-name"><?php esc_html_e( 'Last name', 'pillow-mockup-generator' ); ?></label>
-								</div>
-								<span class="pmg__error" data-pmg-error="last_name"></span>
-							</div>
-						</div>
-
-						<div class="pmg__field">
-							<div class="pmg__input-wrap">
-								<input class="pmg__input" type="tel" id="pmg-phone" name="phone" autocomplete="tel" placeholder=" " data-pmg-input="phone" />
-								<label class="pmg__label" for="pmg-phone"><?php esc_html_e( 'Phone', 'pillow-mockup-generator' ); ?></label>
-							</div>
-							<span class="pmg__error" data-pmg-error="phone"></span>
-						</div>
-
-						<div class="pmg__field">
-							<div class="pmg__input-wrap">
-								<input class="pmg__input" type="email" id="pmg-email" name="email" autocomplete="email" placeholder=" " data-pmg-input="email" />
-								<label class="pmg__label" for="pmg-email"><?php esc_html_e( 'Email', 'pillow-mockup-generator' ); ?></label>
-							</div>
-							<span class="pmg__error" data-pmg-error="email"></span>
-						</div>
-
 						<div class="pmg__field">
 							<div class="pmg__input-wrap">
 								<input class="pmg__input" type="text" id="pmg-address" name="address" autocomplete="street-address" placeholder=" " data-pmg-input="address" />
@@ -176,10 +142,49 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 
 						<div class="pmg__field">
 							<div class="pmg__input-wrap">
+								<input class="pmg__input" type="text" id="pmg-apartment" name="apartment" autocomplete="address-line2" placeholder=" " data-pmg-input="apartment" />
+								<label class="pmg__label" for="pmg-apartment"><?php esc_html_e( 'Apartment, suite, etc. (optional)', 'pillow-mockup-generator' ); ?></label>
+							</div>
+							<span class="pmg__error" data-pmg-error="apartment"></span>
+						</div>
+
+						<div class="pmg__field">
+							<div class="pmg__input-wrap">
 								<input class="pmg__input" type="text" id="pmg-city" name="city" autocomplete="address-level2" placeholder=" " data-pmg-input="city" />
 								<label class="pmg__label" for="pmg-city"><?php esc_html_e( 'City', 'pillow-mockup-generator' ); ?></label>
 							</div>
 							<span class="pmg__error" data-pmg-error="city"></span>
+						</div>
+
+						<div class="pmg__field">
+							<div class="pmg__input-wrap pmg__input-wrap--select">
+								<select class="pmg__input pmg__select" id="pmg-state" name="state" autocomplete="address-level1" data-pmg-input="state">
+									<option value="" selected><?php esc_html_e( 'State', 'pillow-mockup-generator' ); ?></option>
+									<?php foreach ( PMG_Settings::us_states() as $pmg_state ) : ?>
+										<option value="<?php echo esc_attr( $pmg_state ); ?>"><?php echo esc_html( $pmg_state ); ?></option>
+									<?php endforeach; ?>
+								</select>
+								<span class="pmg__select-arrow" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+								</span>
+							</div>
+							<span class="pmg__error" data-pmg-error="state"></span>
+						</div>
+
+						<div class="pmg__field">
+							<div class="pmg__input-wrap">
+								<input class="pmg__input" type="text" id="pmg-zip" name="zip" autocomplete="postal-code" inputmode="numeric" placeholder=" " data-pmg-input="zip" />
+								<label class="pmg__label" for="pmg-zip"><?php esc_html_e( 'ZIP code', 'pillow-mockup-generator' ); ?></label>
+							</div>
+							<span class="pmg__error" data-pmg-error="zip"></span>
+						</div>
+
+						<div class="pmg__field">
+							<div class="pmg__input-wrap">
+								<input class="pmg__input" type="tel" id="pmg-phone" name="phone" autocomplete="tel" placeholder=" " data-pmg-input="phone" />
+								<label class="pmg__label" for="pmg-phone"><?php esc_html_e( 'Phone', 'pillow-mockup-generator' ); ?></label>
+							</div>
+							<span class="pmg__error" data-pmg-error="phone"></span>
 						</div>
 
 						<div class="pmg__form-actions">

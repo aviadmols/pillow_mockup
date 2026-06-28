@@ -266,6 +266,8 @@
 	}
 
 	var SESSION_KEY = 'pmg_session';
+	var MOCKUPS_KEY = 'pmg_mockups';
+	var SELECTED_KEY = 'pmg_selected';
 
 	function storedSession() {
 		try {
@@ -273,6 +275,37 @@
 		} catch (e) {
 			return '';
 		}
+	}
+
+	/**
+	 * Previously generated mockups cached in localStorage, so a returning visitor
+	 * is recognised synchronously (before the async state refresh resolves) and
+	 * the open buttons go straight to the preview instead of the file picker.
+	 */
+	function storedMockups() {
+		try {
+			var arr = JSON.parse(window.localStorage.getItem(MOCKUPS_KEY) || '[]');
+			return Array.isArray(arr) ? arr.filter(function (u) { return !!u; }) : [];
+		} catch (e) {
+			return [];
+		}
+	}
+
+	function storedSelected() {
+		try {
+			return window.localStorage.getItem(SELECTED_KEY) || '';
+		} catch (e) {
+			return '';
+		}
+	}
+
+	function persistMockups(list, selected) {
+		try {
+			window.localStorage.setItem(MOCKUPS_KEY, JSON.stringify(list || []));
+			if (selected) {
+				window.localStorage.setItem(SELECTED_KEY, selected);
+			}
+		} catch (e) {}
 	}
 
 	Widget.prototype.setSession = function (session) {
@@ -678,6 +711,7 @@
 		if (this.els.result) {
 			this.els.result.src = url;
 		}
+		persistMockups(this.state.mockups, url);
 		this.renderGallery();
 	};
 
@@ -726,6 +760,7 @@
 		} else if (!this.state.selectedUrl && this.state.mockups.length) {
 			this.state.selectedUrl = this.state.mockups[this.state.mockups.length - 1];
 		}
+		persistMockups(this.state.mockups, this.state.selectedUrl);
 	};
 
 	Widget.prototype.fail = function () {
@@ -760,22 +795,18 @@
 			var el = self.root.querySelector('[data-pmg-input="' + name + '"]');
 			return el ? el.value.trim() : '';
 		};
-		var firstName = get('first_name');
-		var lastName = get('last_name');
-		var phone = get('phone');
-		var email = get('email');
 		var address = get('address');
+		var apartment = get('apartment');
 		var city = get('city');
+		var state = get('state');
+		var zip = get('zip');
+		var phone = get('phone');
 
-		['first_name', 'last_name', 'phone', 'email', 'address', 'city'].forEach(function (f) { self.fieldError(f, ''); });
+		['address', 'apartment', 'city', 'state', 'zip', 'phone'].forEach(function (f) { self.fieldError(f, ''); });
 
+		// Only the phone is required so we can reach the customer; the rest is optional.
 		var valid = true;
-		if (!firstName) { this.fieldError('first_name', '•'); valid = false; }
-		if (!lastName) { this.fieldError('last_name', '•'); valid = false; }
 		if (!phone) { this.fieldError('phone', '•'); valid = false; }
-		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { this.fieldError('email', '•'); valid = false; }
-		if (!address) { this.fieldError('address', '•'); valid = false; }
-		if (!city) { this.fieldError('city', '•'); valid = false; }
 		if (!valid) {
 			return;
 		}
@@ -785,12 +816,12 @@
 
 		api('lead', {
 			session: this.state.session,
-			first_name: firstName,
-			last_name: lastName,
-			phone: phone,
-			email: email,
 			address: address,
-			city: city
+			apartment: apartment,
+			city: city,
+			state: state,
+			zip: zip,
+			phone: phone
 		}).then(function (res) {
 			self.busy(false);
 			var d = res.data;
@@ -915,6 +946,19 @@
 	 */
 	Widget.prototype.restore = function () {
 		var self = this;
+
+		// Synchronous fast path: surface any previously generated mockup right
+		// away (no network wait) so an open button goes straight to the preview
+		// instead of re-opening the file picker during the async refresh window.
+		var preMockups = storedMockups();
+		var preSelected = storedSelected();
+		if (preMockups.length || preSelected) {
+			this.setMockups(preMockups, preSelected);
+			if (this.state.selectedUrl && this.els.result) {
+				this.els.result.src = this.state.selectedUrl;
+			}
+		}
+
 		var session = storedSession();
 		if (!session) {
 			return;
