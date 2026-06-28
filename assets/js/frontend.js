@@ -152,11 +152,7 @@
 
 		this.els = {
 			file: root.querySelector('[data-pmg-file]'),
-			dropzone: root.querySelector('[data-pmg-dropzone]'),
-			sticky: root.querySelector('[data-pmg-sticky]'),
-			reviewsTrack: root.querySelector('[data-pmg-reviews-track]'),
-			reviewsWrap: root.querySelector('[data-pmg-reviews-wrap]'),
-			reviewsDots: root.querySelector('[data-pmg-reviews-dots]'),
+			modal: root.querySelector('[data-pmg-modal]'),
 			lightbox: root.querySelector('[data-pmg-lightbox]'),
 			zoomImg: root.querySelector('[data-pmg-zoom-img]'),
 			result: root.querySelector('[data-pmg-result]'),
@@ -266,28 +262,37 @@
 		if (this.els.file) {
 			this.els.file.addEventListener('change', function () {
 				if (this.files && this.files[0]) {
-					self.handleFile(this.files[0]);
+					self.startFlow(this.files[0]);
 				}
 			});
 		}
 
-		// Direct native file picker: any [data-pmg-pick] element opens the file dialog.
-		this.root.querySelectorAll('[data-pmg-pick]').forEach(function (el) {
-			el.addEventListener('click', function () {
+		// Global trigger: any element on the page with `.pmg-open` or
+		// `[data-pmg-open]` opens the native file picker (event delegation so it
+		// works for buttons the store owner places anywhere in their layout).
+		document.addEventListener('click', function (e) {
+			var trigger = e.target.closest ? e.target.closest('.pmg-open, [data-pmg-open]') : null;
+			if (trigger) {
+				e.preventDefault();
 				if (self.els.file) {
 					self.els.file.click();
 				}
-			});
-			el.addEventListener('keydown', function (e) {
-				if (e.key === 'Enter' || e.key === ' ') {
-					e.preventDefault();
-					self.els.file && self.els.file.click();
-				}
+			}
+		});
+
+		// Close the popup modal: X button, backdrop, or Escape.
+		this.root.querySelectorAll('[data-pmg-close]').forEach(function (el) {
+			el.addEventListener('click', function () {
+				self.closeModal();
 			});
 		});
 		document.addEventListener('keydown', function (e) {
 			if (e.key === 'Escape') {
-				self.closeZoom();
+				if (self.els.lightbox && !self.els.lightbox.hidden) {
+					self.closeZoom();
+				} else {
+					self.closeModal();
+				}
 			}
 		});
 
@@ -318,28 +323,6 @@
 			});
 		}
 
-		// Drag & drop on the dropzone.
-		if (this.els.dropzone) {
-			['dragenter', 'dragover'].forEach(function (ev) {
-				self.els.dropzone.addEventListener(ev, function (e) {
-					e.preventDefault();
-					this.classList.add('is-dragover');
-				});
-			});
-			['dragleave', 'drop'].forEach(function (ev) {
-				self.els.dropzone.addEventListener(ev, function (e) {
-					e.preventDefault();
-					this.classList.remove('is-dragover');
-				});
-			});
-			this.els.dropzone.addEventListener('drop', function (e) {
-				var dt = e.dataTransfer;
-				if (dt && dt.files && dt.files[0]) {
-					self.handleFile(dt.files[0]);
-				}
-			});
-		}
-
 		// Action buttons.
 		this.root.querySelectorAll('[data-pmg-action]').forEach(function (btn) {
 			btn.addEventListener('click', function () {
@@ -361,166 +344,48 @@
 				self.submitLead();
 			});
 		}
-
-		// Marketing landing widgets.
-		this.initReviews();
-		this.initStickyCta();
 	};
 
 	/**
-	 * Reviews carousel (4 cards on desktop, 8 on mobile) with dots, autoplay
-	 * and touch/drag support. Fully scoped to this widget instance.
+	 * Open the popup modal (locks background scroll).
 	 */
-	Widget.prototype.initReviews = function () {
-		var self = this;
-		var track = this.els.reviewsTrack;
-		var dotsContainer = this.els.reviewsDots;
-		var wrapper = this.els.reviewsWrap;
-		if (!track || !dotsContainer || !wrapper) {
-			return;
+	Widget.prototype.openModal = function () {
+		if (this.els.modal) {
+			this.els.modal.hidden = false;
 		}
-
-		var slides = Array.prototype.slice.call(track.children);
-		var currentIndex = 0;
-		var startX = 0;
-		var currentTranslate = 0;
-		var prevTranslate = 0;
-		var isDragging = false;
-		var autoSlideInterval = null;
-		var isMobile = window.innerWidth <= 580;
-
-		function totalSlides() {
-			return isMobile ? 8 : 4;
-		}
-
-		function layout() {
-			isMobile = window.innerWidth <= 580;
-			dotsContainer.innerHTML = '';
-
-			if (isMobile) {
-				track.style.width = '800%';
-				slides.forEach(function (slide) {
-					slide.style.width = '12.5%';
-					slide.style.padding = '0';
-				});
-			} else {
-				track.style.width = '200%';
-				slides.forEach(function (slide) {
-					slide.style.width = '25%';
-					slide.style.padding = '0 10px';
-				});
-			}
-
-			var total = totalSlides();
-			for (var i = 0; i < total; i++) {
-				var dot = document.createElement('div');
-				dot.className = 'pmg__dot' + (i === 0 ? ' is-active' : '');
-				(function (index) {
-					dot.addEventListener('click', function () {
-						update(index);
-						resetAuto();
-					});
-				})(i);
-				dotsContainer.appendChild(dot);
-			}
-			update(0);
-		}
-
-		function update(index) {
-			var total = totalSlides();
-			if (index >= total) index = 0;
-			if (index < 0) index = total - 1;
-			currentIndex = index;
-			var percentage = isMobile ? 12.5 : 25;
-			track.style.transform = 'translateX(-' + (currentIndex * percentage) + '%)';
-			var dots = Array.prototype.slice.call(dotsContainer.children);
-			dots.forEach(function (dot, i) {
-				dot.classList.toggle('is-active', i === currentIndex);
-			});
-			prevTranslate = -currentIndex * (wrapper.offsetWidth / (isMobile ? 1 : 2));
-		}
-
-		function startAuto() {
-			autoSlideInterval = setInterval(function () {
-				update((currentIndex + 1) % totalSlides());
-			}, 5000);
-		}
-
-		function resetAuto() {
-			clearInterval(autoSlideInterval);
-			startAuto();
-		}
-
-		function getX(event) {
-			return event.type.indexOf('mouse') !== -1 ? event.pageX : event.touches[0].clientX;
-		}
-
-		function touchStart(event) {
-			isDragging = true;
-			startX = getX(event);
-			clearInterval(autoSlideInterval);
-		}
-
-		function touchMove(event) {
-			if (!isDragging) return;
-			currentTranslate = prevTranslate + (getX(event) - startX);
-		}
-
-		function touchEnd() {
-			if (!isDragging) return;
-			isDragging = false;
-			var movedBy = currentTranslate - prevTranslate;
-			if (movedBy < -50 && currentIndex < totalSlides() - 1) {
-				currentIndex += 1;
-			} else if (movedBy > 50 && currentIndex > 0) {
-				currentIndex -= 1;
-			}
-			update(currentIndex);
-			startAuto();
-		}
-
-		wrapper.addEventListener('touchstart', touchStart, { passive: true });
-		wrapper.addEventListener('touchend', touchEnd);
-		wrapper.addEventListener('touchmove', touchMove, { passive: true });
-		wrapper.addEventListener('mousedown', touchStart);
-		wrapper.addEventListener('mouseup', touchEnd);
-		wrapper.addEventListener('mouseleave', touchEnd);
-		wrapper.addEventListener('mousemove', touchMove);
-
-		var resizeTimeout;
-		window.addEventListener('resize', function () {
-			clearTimeout(resizeTimeout);
-			resizeTimeout = setTimeout(function () {
-				if ((window.innerWidth <= 580) !== isMobile) {
-					layout();
-					resetAuto();
-				}
-			}, 100);
-		});
-
-		layout();
-		startAuto();
+		try {
+			document.body.classList.add('pmg-modal-open');
+		} catch (e) {}
 	};
 
 	/**
-	 * Sticky upload CTA on mobile: reveals once the upload area scrolls out of
-	 * view, but only while the widget is still on the upload screen.
+	 * Close the popup modal and reset to the idle (closed) state.
 	 */
-	Widget.prototype.initStickyCta = function () {
-		var self = this;
-		var sticky = this.els.sticky;
-		var area = this.els.dropzone;
-		if (!sticky || !area) {
+	Widget.prototype.closeModal = function () {
+		this.closeZoom();
+		if (this.els.modal) {
+			this.els.modal.hidden = true;
+		}
+		try {
+			document.body.classList.remove('pmg-modal-open');
+		} catch (e) {}
+		this.setState('idle');
+	};
+
+	/**
+	 * Entry point once a file is chosen: validate, open the modal, and run the
+	 * existing generate -> preview flow inside it.
+	 */
+	Widget.prototype.startFlow = function (file) {
+		if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+			window.alert(CFG.i18n.invalidFile);
+			if (this.els.file) {
+				this.els.file.value = '';
+			}
 			return;
 		}
-		window.addEventListener('scroll', function () {
-			if (window.innerWidth > 580 || self.root.getAttribute('data-state') !== 'upload') {
-				sticky.classList.remove('is-visible');
-				return;
-			}
-			var rect = area.getBoundingClientRect();
-			sticky.classList.toggle('is-visible', rect.bottom < 0);
-		}, { passive: true });
+		this.openModal();
+		this.handleFile(file);
 	};
 
 	Widget.prototype.openZoom = function () {
@@ -657,11 +522,10 @@
 	Widget.prototype.handleFile = function (file) {
 		var self = this;
 		if (!file.type || file.type.indexOf('image/') !== 0) {
-			this.notice(this.els.uploadNotice, CFG.i18n.invalidFile);
-			this.setState('upload');
+			window.alert(CFG.i18n.invalidFile);
+			this.closeModal();
 			return;
 		}
-		this.notice(this.els.uploadNotice, '');
 		this.setState('loading');
 		this.busy(true);
 		fileToDataUrl(file, CFG.maxPx).then(function (dataUrl) {
@@ -669,8 +533,8 @@
 			self.generate(dataUrl);
 		}).catch(function () {
 			self.busy(false);
-			self.notice(self.els.uploadNotice, CFG.i18n.invalidFile);
-			self.setState('upload');
+			window.alert(CFG.i18n.invalidFile);
+			self.closeModal();
 		});
 	};
 
@@ -788,13 +652,14 @@
 	Widget.prototype.fail = function () {
 		// Always show a friendly, fixed inline message (never the raw server reply).
 		var msg = CFG.i18n.generateFailed || CFG.i18n.genericError;
-		// If we already have a result, stay on preview; otherwise return to upload.
+		// If we already have a result, stay on preview; otherwise close the modal
+		// so the visitor can simply pick another photo and try again.
 		if (this.els.result && this.els.result.getAttribute('src')) {
 			this.notice(this.els.previewNotice, msg);
 			this.setState('preview');
 		} else {
-			this.notice(this.els.uploadNotice, msg);
-			this.setState('upload');
+			window.alert(msg);
+			this.closeModal();
 		}
 	};
 
@@ -989,16 +854,12 @@
 			if (!d.mockups || !d.mockups.length) {
 				return;
 			}
+			// Preload session data only; the modal stays closed until the visitor
+			// triggers it from one of their buttons (which re-picks a photo).
 			self.setMockups(d.mockups, d.selected);
 			if (self.state.selectedUrl && self.els.result) {
 				self.els.result.src = self.state.selectedUrl;
 			}
-			if (d.status === 'completed') {
-				self.setState('done');
-			} else {
-				self.showResult();
-			}
-			self.updateToolbar();
 		}).catch(function () {});
 	};
 
