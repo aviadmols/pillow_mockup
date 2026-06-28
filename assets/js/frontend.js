@@ -908,12 +908,11 @@
 
 		['first_name', 'last_name', 'email', 'address', 'apartment', 'city', 'state', 'zip', 'phone'].forEach(function (f) { self.fieldError(f, ''); });
 
-		// First name, email and phone are required so we can reach the customer
-		// and deliver the design; everything else is optional.
+		// First name and email are required so we can deliver the design; the
+		// phone and everything else are optional.
 		var valid = true;
 		if (!firstName) { this.fieldError('first_name', '•'); valid = false; }
 		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { this.fieldError('email', '•'); valid = false; }
-		if (!phone) { this.fieldError('phone', '•'); valid = false; }
 		if (!valid) {
 			return;
 		}

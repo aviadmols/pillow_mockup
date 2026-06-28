@@ -295,10 +295,11 @@ class PMG_Rest {
 			$name       = trim( $first_name . ' ' . $last_name );
 		}
 
-		// Only the phone is required so we can reach the customer; the rest is optional.
+		// A valid email is required so we can deliver the design; the phone and
+		// everything else are optional.
 		$errors = array();
-		if ( '' === $phone ) {
-			$errors['phone'] = __( 'Phone is required.', 'pillow-mockup-generator' );
+		if ( '' === $email || ! is_email( $email ) ) {
+			$errors['email'] = __( 'A valid email is required.', 'pillow-mockup-generator' );
 		}
 		if ( $errors ) {
 			return new WP_REST_Response(
