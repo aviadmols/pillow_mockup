@@ -198,17 +198,25 @@
 				return;
 			}
 			e.preventDefault();
-			var w = pmgWidgets[0];
-			if (!w) {
-				return;
-			}
-			if (w.state.selectedUrl) {
+
+			// If a mockup already exists this session, open straight to the
+			// preview (no file picker), regardless of how many widgets exist.
+			var w = pmgWidgetWithImage();
+			if (w) {
+				if (w.state.selectedUrl && w.els.result) {
+					w.els.result.src = w.state.selectedUrl;
+				}
+				w.renderGallery();
 				w.openModal();
 				w.setState('preview');
-			} else if (w.els.file) {
+				return;
+			}
+
+			var first = pmgWidgets[0];
+			if (first && first.els.file) {
 				// Reset so re-picking the same file still fires `change`.
-				w.els.file.value = '';
-				w.els.file.click();
+				first.els.file.value = '';
+				first.els.file.click();
 			}
 		});
 
@@ -216,7 +224,8 @@
 			if (e.key !== 'Escape') {
 				return;
 			}
-			var w = pmgWidgets[0];
+			// Act on whichever widget currently has its modal open.
+			var w = pmgOpenWidget() || pmgWidgets[0];
 			if (!w) {
 				return;
 			}
@@ -226,6 +235,32 @@
 				w.closeModal();
 			}
 		});
+	}
+
+	/**
+	 * Return the first widget that already holds a generated mockup this session.
+	 */
+	function pmgWidgetWithImage() {
+		for (var i = 0; i < pmgWidgets.length; i++) {
+			var w = pmgWidgets[i];
+			if (w && (w.state.selectedUrl || (w.state.mockups && w.state.mockups.length))) {
+				return w;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Return the widget whose popup modal is currently open, if any.
+	 */
+	function pmgOpenWidget() {
+		for (var i = 0; i < pmgWidgets.length; i++) {
+			var w = pmgWidgets[i];
+			if (w && w.els.modal && !w.els.modal.hidden) {
+				return w;
+			}
+		}
+		return null;
 	}
 
 	var SESSION_KEY = 'pmg_session';
@@ -318,8 +353,11 @@
 
 		if (this.els.file) {
 			this.els.file.addEventListener('change', function () {
-				if (this.files && this.files[0]) {
-					self.startFlow(this.files[0]);
+				var file = this.files && this.files[0];
+				// Reset immediately so re-picking the same file fires `change` again.
+				this.value = '';
+				if (file) {
+					self.startFlow(file);
 				}
 			});
 		}

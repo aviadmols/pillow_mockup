@@ -781,6 +781,11 @@ body.pmg-modal-open {
 	.pmg__tool--cta {
 		margin-inline-start: 6px;
 	}
+
+	.pmg__btn {
+		padding: 3px 30px;
+		min-height: 20px;
+	}
 }
 
 /* ------------------------------------------------------------------ */
