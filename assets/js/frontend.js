@@ -27,6 +27,12 @@
 	// Live nonce — refreshed from the public endpoint so cached pages still work.
 	var currentNonce = CFG.nonce;
 
+	// All widget instances on the page, plus a guard so the global open/close
+	// listeners are registered exactly once (prevents the file picker from being
+	// triggered multiple times when more than one widget exists).
+	var pmgWidgets = [];
+	var pmgGlobalBound = false;
+
 	/**
 	 * Fetch a fresh REST nonce (never cached). Always resolves.
 	 */
@@ -150,6 +156,8 @@
 		this.lottie = null;
 		this.purchaseTracked = false;
 
+		pmgWidgets.push(this);
+
 		this.els = {
 			file: root.querySelector('[data-pmg-file]'),
 			modal: root.querySelector('[data-pmg-modal]'),
@@ -169,6 +177,55 @@
 		};
 
 		this.bind();
+	}
+
+	/**
+	 * Register the page-wide open/close listeners exactly once. The "open"
+	 * trigger is delegated from any `.pmg-open` / `[data-pmg-open]` element:
+	 *  - if a mockup already exists this session, it opens the modal straight to
+	 *    the preview (no file picker);
+	 *  - otherwise it opens the native file picker.
+	 */
+	function bindGlobalTriggers() {
+		if (pmgGlobalBound) {
+			return;
+		}
+		pmgGlobalBound = true;
+
+		document.addEventListener('click', function (e) {
+			var trigger = e.target.closest ? e.target.closest('.pmg-open, [data-pmg-open]') : null;
+			if (!trigger) {
+				return;
+			}
+			e.preventDefault();
+			var w = pmgWidgets[0];
+			if (!w) {
+				return;
+			}
+			if (w.state.selectedUrl) {
+				w.openModal();
+				w.setState('preview');
+			} else if (w.els.file) {
+				// Reset so re-picking the same file still fires `change`.
+				w.els.file.value = '';
+				w.els.file.click();
+			}
+		});
+
+		document.addEventListener('keydown', function (e) {
+			if (e.key !== 'Escape') {
+				return;
+			}
+			var w = pmgWidgets[0];
+			if (!w) {
+				return;
+			}
+			if (w.els.lightbox && !w.els.lightbox.hidden) {
+				w.closeZoom();
+			} else {
+				w.closeModal();
+			}
+		});
 	}
 
 	var SESSION_KEY = 'pmg_session';
@@ -267,33 +324,15 @@
 			});
 		}
 
-		// Global trigger: any element on the page with `.pmg-open` or
-		// `[data-pmg-open]` opens the native file picker (event delegation so it
-		// works for buttons the store owner places anywhere in their layout).
-		document.addEventListener('click', function (e) {
-			var trigger = e.target.closest ? e.target.closest('.pmg-open, [data-pmg-open]') : null;
-			if (trigger) {
-				e.preventDefault();
-				if (self.els.file) {
-					self.els.file.click();
-				}
-			}
-		});
+		// Global triggers (file-picker open + Escape) are registered once for the
+		// whole page so they never fire multiple times when several widgets exist.
+		bindGlobalTriggers();
 
-		// Close the popup modal: X button, backdrop, or Escape.
+		// Close the popup modal: X button or backdrop.
 		this.root.querySelectorAll('[data-pmg-close]').forEach(function (el) {
 			el.addEventListener('click', function () {
 				self.closeModal();
 			});
-		});
-		document.addEventListener('keydown', function (e) {
-			if (e.key === 'Escape') {
-				if (self.els.lightbox && !self.els.lightbox.hidden) {
-					self.closeZoom();
-				} else {
-					self.closeModal();
-				}
-			}
 		});
 
 		// Zoom lightbox: open from the result image / badge, close on backdrop or X.

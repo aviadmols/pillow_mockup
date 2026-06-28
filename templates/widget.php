@@ -31,7 +31,22 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
 			</button>
 
-			<div class="pmg__stage">
+			<div class="pmg__topbar">
+				<img draggable="false" class="pmg__emoji" alt="" src="https://s.w.org/images/core/emoji/17.0.2/svg/26a1.svg" /> <?php esc_html_e( 'Free US Shipping – Limited Time Only!', 'pillow-mockup-generator' ); ?>
+			</div>
+
+			<div class="pmg__modal-body">
+
+				<section class="pmg__hero">
+					<div class="pmg__award">
+						<img decoding="async" src="https://on1y.one/wp-content/uploads/2026/06/download-8.svg" alt="<?php esc_attr_e( 'Award', 'pillow-mockup-generator' ); ?>" />
+						<?php esc_html_e( 'Most Creative Gift of 2026', 'pillow-mockup-generator' ); ?>
+					</div>
+					<h1 class="pmg__hero-title"><?php esc_html_e( 'Turn Your Photo into a Custom Pillow', 'pillow-mockup-generator' ); ?> <span><?php esc_html_e( '– In Less Than 5 Seconds!', 'pillow-mockup-generator' ); ?></span></h1>
+					<p class="pmg__hero-subtitle"><?php esc_html_e( 'Upload now for a 100% Free live preview. See exactly how your unique pillow will look before you buy!', 'pillow-mockup-generator' ); ?></p>
+				</section>
+
+				<div class="pmg__stage">
 
 				<!-- Loading -->
 				<div class="pmg__panel pmg__panel--loading" data-panel="loading">
@@ -190,6 +205,7 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 					<p class="pmg__done-message"><?php esc_html_e( 'We received your request and will contact you shortly to complete the process.', 'pillow-mockup-generator' ); ?></p>
 				</div>
 
+				</div>
 			</div>
 		</div>
 	</div>
