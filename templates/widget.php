@@ -42,8 +42,8 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 						<img decoding="async" src="https://on1y.one/wp-content/uploads/2026/06/download-8.svg" alt="<?php esc_attr_e( 'Award', 'pillow-mockup-generator' ); ?>" />
 						<?php esc_html_e( 'Most Creative Gift of 2026', 'pillow-mockup-generator' ); ?>
 					</div>
-					<h1 class="pmg__hero-title"><?php esc_html_e( 'Turn Your Photo into a Custom Pillow', 'pillow-mockup-generator' ); ?> <span><?php esc_html_e( '– In Less Than 5 Seconds!', 'pillow-mockup-generator' ); ?></span></h1>
-					<p class="pmg__hero-subtitle"><?php esc_html_e( 'Upload now for a 100% Free live preview. See exactly how your unique pillow will look before you buy!', 'pillow-mockup-generator' ); ?></p>
+					<h1 class="pmg__hero-title"><?php esc_html_e( 'Magic', 'pillow-mockup-generator' ); ?> <span><?php esc_html_e( 'in Progress!', 'pillow-mockup-generator' ); ?></span></h1>
+					<p class="pmg__hero-subtitle"><?php esc_html_e( 'We\'re crafting your design. Your custom pillow preview will appear in just a few seconds.', 'pillow-mockup-generator' ); ?></p>
 				</section>
 
 				<div class="pmg__stage">
