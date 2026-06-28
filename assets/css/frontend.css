@@ -172,7 +172,7 @@ body.pmg-modal-open {
 }
 
 .pmg__hero-title {
-	margin: 0 0 12px;
+	margin: 0 0 12px !important;
 	font-size: clamp(26px, 5.5vw, 40px);
 	line-height: 1.12;
 	font-weight: 800;
@@ -218,6 +218,7 @@ body.pmg-modal-open {
 .pmg__panel {
 	display: none;
 	width: 100%;
+	padding-bottom: 0;
 	animation: pmg-fade 0.5s ease both;
 }
 
@@ -476,6 +477,7 @@ body.pmg-modal-open {
 	justify-content: center;
 	gap: 10px;
 	margin-block-start: clamp(16px, 3vw, 24px);
+	padding-bottom: 20px;
 }
 
 .pmg__thumb {
@@ -509,35 +511,30 @@ body.pmg-modal-open {
 
 /* Toolbar */
 .pmg__toolbar {
-	position: fixed;
-	inset-inline-start: 50%;
-	inset-block-end: 16px;
-	transform: translateX(-50%);
+	position: sticky;
+	inset-block-end: 10px;
+	inset-inline: 0;
 	z-index: 5;
-	display: inline-flex;
+	display: flex;
 	align-items: center;
 	gap: 8px;
-	margin: 0;
-	max-width: calc(100% - 32px);
+	width: 350px;
+	max-width: 100%;
+	margin: 0 auto;
 	padding: 10px;
 	background: var(--pmg-paper);
 	border: 1px solid var(--pmg-rule);
 	border-radius: 100px;
 	box-shadow: var(--pmg-shadow);
 	flex-wrap: nowrap;
-	justify-content: center;
-}
-
-/* Reserve space so the bottom content is never hidden behind the fixed bar. */
-.pmg__panel--preview {
-	padding-block-end: 84px;
+	justify-content: space-around;
 }
 
 .pmg__tool {
 	display: inline-flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 6px;
+	gap: 3px;
 	min-width: 76px;
 	padding: 10px 14px;
 	border: 0;
@@ -864,7 +861,7 @@ body.pmg-modal-open {
 
 .pmg__size-title {
 	font-family: 'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif;
-	margin: 0 0 18px;
+	margin: 24px 0 12px !important;
 	font-size: 22px;
 	font-weight: 800;
 	letter-spacing: -0.02em;
