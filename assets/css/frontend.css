@@ -184,6 +184,7 @@ body.pmg-modal-open {
 
 .pmg__hero-title {
 	margin: 0 0 12px !important;
+	font-family: 'Bricolage Grotesque', sans-serif;
 	font-size: clamp(26px, 5.5vw, 40px);
 	line-height: 1.12;
 	font-weight: 800;
