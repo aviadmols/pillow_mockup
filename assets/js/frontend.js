@@ -208,6 +208,11 @@
 			// preview (no file picker), regardless of how many widgets exist.
 			var w = pmgWidgetWithImage();
 			if (w) {
+				// Make sure a concrete image is selected so the preview is never
+				// blank (which would look like the upload area).
+				if (!w.state.selectedUrl && w.state.mockups && w.state.mockups.length) {
+					w.state.selectedUrl = w.state.mockups[w.state.mockups.length - 1];
+				}
 				if (w.state.selectedUrl && w.els.result) {
 					w.els.result.src = w.state.selectedUrl;
 				}

@@ -203,9 +203,14 @@ body.pmg-modal-open {
 	color: var(--pmg-muted);
 }
 
-/* Hide the marketing hero once the visitor reaches size / details steps. */
+/* Hide the marketing/upload hero whenever a mockup is already on screen.
+   It only ever shows during "loading" (as a backdrop while the first mockup
+   is generated); once there's an image to show it must never look like an
+   upload prompt again. */
+.pmg[data-state="preview"] .pmg__hero,
 .pmg[data-state="size"] .pmg__hero,
-.pmg[data-state="details"] .pmg__hero {
+.pmg[data-state="details"] .pmg__hero,
+.pmg[data-state="done"] .pmg__hero {
 	display: none;
 }
 
