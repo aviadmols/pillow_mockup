@@ -110,7 +110,19 @@ class PMG_Rest {
 	 */
 	public function track_open( WP_REST_Request $request ) {
 		$session = preg_replace( '/[^a-zA-Z0-9]/', '', (string) $request->get_param( 'session' ) );
-		PMG_Leads::log_open( $this->client_ip(), substr( (string) $session, 0, 32 ) );
+		$session = substr( (string) $session, 0, 32 );
+		$ip      = $this->client_ip();
+		$stage   = sanitize_key( (string) $request->get_param( 'stage' ) );
+
+		if ( 'size' === $stage ) {
+			// Funnel: visitor chose a size.
+			PMG_Leads::log_event( $ip, 'size', $session );
+		} else {
+			// Default: a CTA/open-modal click — keep the raw counter and the
+			// per-IP funnel "cta" stage.
+			PMG_Leads::log_open( $ip, $session );
+			PMG_Leads::log_event( $ip, 'cta', $session );
+		}
 
 		$response = new WP_REST_Response( null, 204 );
 		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
@@ -200,6 +212,9 @@ class PMG_Rest {
 		}
 
 		$attempts_left = max( 0, $max_mockups - $total_done );
+
+		// Funnel: visitor successfully created a mockup (once per IP).
+		PMG_Leads::log_event( $this->client_ip(), 'generate', $session );
 
 		return new WP_REST_Response(
 			array(
@@ -393,6 +408,9 @@ class PMG_Rest {
 			PMG_Emailer::notify_customer( $lead );
 			PMG_Emailer::notify_admin_order( $lead );
 		}
+
+		// Funnel: visitor completed the purchase (once per IP).
+		PMG_Leads::log_event( $this->client_ip(), 'purchase', $session );
 
 		return new WP_REST_Response(
 			array(

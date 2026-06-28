@@ -308,20 +308,15 @@
 	var pmgLastTrack = 0;
 
 	/**
-	 * Fire-and-forget tracking of an open-modal button click (count + IP) so it
-	 * never blocks the UI or slows the page. Uses sendBeacon when available.
+	 * Fire-and-forget analytics beacon (never blocks the UI or slows the page).
+	 * Uses sendBeacon when available, with a keepalive fetch fallback.
 	 *
-	 * @param {object} widget Source widget (for the session token), may be null.
+	 * @param {object} payload JSON payload sent to the track-open endpoint.
 	 */
-	function trackOpen(widget) {
-		var now = Date.now ? Date.now() : new Date().getTime();
-		if (now - pmgLastTrack < 700) {
-			return;
-		}
-		pmgLastTrack = now;
+	function trackBeacon(payload) {
 		try {
 			var url = CFG.restUrl + 'track-open';
-			var body = JSON.stringify({ session: widget && widget.state ? widget.state.session : '' });
+			var body = JSON.stringify(payload || {});
 			if (navigator.sendBeacon) {
 				navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
 			} else {
@@ -334,6 +329,30 @@
 				}).catch(function () {});
 			}
 		} catch (e) {}
+	}
+
+	/**
+	 * Track an open-modal (CTA) click — counter + funnel "cta" stage.
+	 *
+	 * @param {object} widget Source widget (for the session token), may be null.
+	 */
+	function trackOpen(widget) {
+		var now = Date.now ? Date.now() : new Date().getTime();
+		if (now - pmgLastTrack < 700) {
+			return;
+		}
+		pmgLastTrack = now;
+		trackBeacon({ session: widget && widget.state ? widget.state.session : '' });
+	}
+
+	/**
+	 * Track a later funnel stage (e.g. "size") for the current session.
+	 *
+	 * @param {string} stage  Funnel stage name.
+	 * @param {object} widget Source widget (for the session token), may be null.
+	 */
+	function trackStage(stage, widget) {
+		trackBeacon({ stage: stage, session: widget && widget.state ? widget.state.session : '' });
 	}
 
 	/**
@@ -680,6 +699,8 @@
 			price: parseFloat(el.getAttribute('data-price')) || 0,
 			compare: parseFloat(el.getAttribute('data-compare')) || 0
 		};
+		// Funnel: visitor chose a size (non-blocking beacon).
+		trackStage('size', this);
 		this.openDetails('love');
 	};
 

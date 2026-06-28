@@ -223,6 +223,65 @@ class PMG_Admin {
 				<div class="pmg-card"><span class="pmg-card-label"><?php esc_html_e( 'Modal opens (button clicks)', 'pillow-mockup-generator' ); ?></span><span class="pmg-card-value"><?php echo esc_html( number_format_i18n( PMG_Leads::open_count() ) ); ?></span></div>
 			</div>
 
+			<h2><?php esc_html_e( 'Conversion funnel (unique visitors by IP)', 'pillow-mockup-generator' ); ?></h2>
+			<?php
+			$pmg_funnel = PMG_Leads::funnel();
+			$pmg_steps  = array(
+				array(
+					'key'   => 'cta',
+					'label' => __( 'Clicked the CTA button', 'pillow-mockup-generator' ),
+				),
+				array(
+					'key'   => 'generate',
+					'label' => __( 'Created an image', 'pillow-mockup-generator' ),
+				),
+				array(
+					'key'   => 'size',
+					'label' => __( 'Chose a size', 'pillow-mockup-generator' ),
+				),
+				array(
+					'key'   => 'purchase',
+					'label' => __( 'Completed purchase', 'pillow-mockup-generator' ),
+				),
+			);
+			$pmg_top = max( 1, (int) $pmg_funnel['cta'] );
+			?>
+			<?php if ( empty( $pmg_funnel['cta'] ) && empty( $pmg_funnel['generate'] ) && empty( $pmg_funnel['size'] ) && empty( $pmg_funnel['purchase'] ) ) : ?>
+				<p class="pmg-hint"><?php esc_html_e( 'No funnel data yet.', 'pillow-mockup-generator' ); ?></p>
+			<?php else : ?>
+				<table class="widefat striped pmg-table pmg-funnel">
+					<thead><tr>
+						<th><?php esc_html_e( 'Step', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'Visitors', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'Of all (CTA)', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'From previous step', 'pillow-mockup-generator' ); ?></th>
+					</tr></thead>
+					<tbody>
+					<?php
+					$pmg_prev = 0;
+					foreach ( $pmg_steps as $pmg_i => $pmg_step ) :
+						$pmg_count   = (int) $pmg_funnel[ $pmg_step['key'] ];
+						$pmg_overall = round( ( $pmg_count / $pmg_top ) * 100, 1 );
+						$pmg_from    = 0 === $pmg_i ? 100.0 : ( $pmg_prev > 0 ? round( ( $pmg_count / $pmg_prev ) * 100, 1 ) : 0 );
+						?>
+						<tr>
+							<td><?php echo esc_html( $pmg_step['label'] ); ?></td>
+							<td><strong><?php echo esc_html( number_format_i18n( $pmg_count ) ); ?></strong></td>
+							<td>
+								<span class="pmg-funnel-bar" style="display:inline-block;height:10px;border-radius:5px;background:#2271b1;width:<?php echo esc_attr( max( 2, (float) $pmg_overall ) ); ?>%;min-width:6px;vertical-align:middle;"></span>
+								<?php echo esc_html( $pmg_overall . '%' ); ?>
+							</td>
+							<td><?php echo esc_html( $pmg_from . '%' ); ?></td>
+						</tr>
+						<?php
+						$pmg_prev = $pmg_count;
+					endforeach;
+					?>
+					</tbody>
+				</table>
+				<p class="pmg-hint"><?php esc_html_e( 'Each visitor is counted once per step, identified by IP address.', 'pillow-mockup-generator' ); ?></p>
+			<?php endif; ?>
+
 			<h2><?php esc_html_e( 'Breakdown by stage', 'pillow-mockup-generator' ); ?></h2>
 			<table class="widefat striped pmg-table">
 				<thead><tr>

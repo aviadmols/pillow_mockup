@@ -28,6 +28,11 @@ class PMG_Activator {
 	const OPENS_TABLE = 'pmg_open_log';
 
 	/**
+	 * Funnel events table name (without prefix). One row per IP per stage.
+	 */
+	const EVENTS_TABLE = 'pmg_events';
+
+	/**
 	 * Fully qualified leads table name.
 	 *
 	 * @return string
@@ -55,6 +60,16 @@ class PMG_Activator {
 	public static function opens_table() {
 		global $wpdb;
 		return $wpdb->prefix . self::OPENS_TABLE;
+	}
+
+	/**
+	 * Fully qualified funnel events table name.
+	 *
+	 * @return string
+	 */
+	public static function events_table() {
+		global $wpdb;
+		return $wpdb->prefix . self::EVENTS_TABLE;
 	}
 
 	/**
@@ -96,6 +111,7 @@ class PMG_Activator {
 		$leads           = self::leads_table();
 		$generations     = self::generations_table();
 		$opens           = self::opens_table();
+		$events          = self::events_table();
 
 		$leads_sql = "CREATE TABLE {$leads} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -155,9 +171,21 @@ class PMG_Activator {
 			KEY created_at (created_at)
 		) {$charset_collate};";
 
+		$events_sql = "CREATE TABLE {$events} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			ip varchar(64) NOT NULL DEFAULT '',
+			stage varchar(20) NOT NULL DEFAULT '',
+			session varchar(64) NOT NULL DEFAULT '',
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY ip_stage (ip,stage),
+			KEY stage (stage)
+		) {$charset_collate};";
+
 		dbDelta( $leads_sql );
 		dbDelta( $generations_sql );
 		dbDelta( $opens_sql );
+		dbDelta( $events_sql );
 
 		update_option( 'pmg_db_version', PMG_VERSION );
 	}

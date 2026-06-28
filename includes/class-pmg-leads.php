@@ -357,6 +357,59 @@ class PMG_Leads {
 	}
 
 	/**
+	 * Record that an IP reached a funnel stage. Deduplicated to one row per
+	 * IP per stage via INSERT IGNORE on the unique (ip, stage) key, so the
+	 * table stays tiny and counts are naturally "once per IP".
+	 *
+	 * @param string $ip      Visitor IP.
+	 * @param string $stage   Funnel stage: cta | generate | size | purchase.
+	 * @param string $session Session token (optional).
+	 * @return void
+	 */
+	public static function log_event( $ip, $stage, $session = '' ) {
+		global $wpdb;
+		$ip = substr( (string) $ip, 0, 64 );
+		if ( '' === $ip ) {
+			return;
+		}
+		$table = PMG_Activator::events_table();
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare(
+				"INSERT IGNORE INTO {$table} (ip, stage, session, created_at) VALUES (%s, %s, %s, %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$ip,
+				substr( (string) $stage, 0, 20 ),
+				substr( (string) $session, 0, 64 ),
+				self::now()
+			)
+		);
+	}
+
+	/**
+	 * Unique-IP counts for each funnel stage.
+	 *
+	 * @return array{cta:int,generate:int,size:int,purchase:int}
+	 */
+	public static function funnel() {
+		global $wpdb;
+		$table = PMG_Activator::events_table();
+		$map   = array(
+			'cta'      => 0,
+			'generate' => 0,
+			'size'     => 0,
+			'purchase' => 0,
+		);
+		$rows = $wpdb->get_results( "SELECT stage, COUNT(*) AS c FROM {$table} GROUP BY stage", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		if ( is_array( $rows ) ) {
+			foreach ( $rows as $row ) {
+				if ( isset( $map[ $row['stage'] ] ) ) {
+					$map[ $row['stage'] ] = (int) $row['c'];
+				}
+			}
+		}
+		return $map;
+	}
+
+	/**
 	 * Most recent open-modal clicks (IP + time).
 	 *
 	 * @param int $limit Max rows.
