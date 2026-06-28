@@ -134,6 +134,30 @@ $pmg_root_style  = '' !== $pmg_font_family ? 'font-family:' . $pmg_font_family .
 
 						<div class="pmg__field">
 							<div class="pmg__input-wrap">
+								<input class="pmg__input" type="text" id="pmg-first-name" name="first_name" autocomplete="given-name" placeholder=" " data-pmg-input="first_name" />
+								<label class="pmg__label" for="pmg-first-name"><?php esc_html_e( 'First name', 'pillow-mockup-generator' ); ?></label>
+							</div>
+							<span class="pmg__error" data-pmg-error="first_name"></span>
+						</div>
+
+						<div class="pmg__field">
+							<div class="pmg__input-wrap">
+								<input class="pmg__input" type="text" id="pmg-last-name" name="last_name" autocomplete="family-name" placeholder=" " data-pmg-input="last_name" />
+								<label class="pmg__label" for="pmg-last-name"><?php esc_html_e( 'Last name', 'pillow-mockup-generator' ); ?></label>
+							</div>
+							<span class="pmg__error" data-pmg-error="last_name"></span>
+						</div>
+
+						<div class="pmg__field">
+							<div class="pmg__input-wrap">
+								<input class="pmg__input" type="email" id="pmg-email" name="email" autocomplete="email" placeholder=" " data-pmg-input="email" />
+								<label class="pmg__label" for="pmg-email"><?php esc_html_e( 'Email', 'pillow-mockup-generator' ); ?></label>
+							</div>
+							<span class="pmg__error" data-pmg-error="email"></span>
+						</div>
+
+						<div class="pmg__field">
+							<div class="pmg__input-wrap">
 								<input class="pmg__input" type="text" id="pmg-address" name="address" autocomplete="street-address" placeholder=" " data-pmg-input="address" />
 								<label class="pmg__label" for="pmg-address"><?php esc_html_e( 'Address', 'pillow-mockup-generator' ); ?></label>
 							</div>

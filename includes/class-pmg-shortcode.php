@@ -94,6 +94,10 @@ class PMG_Shortcode {
 			'PMG_CONFIG',
 			array(
 				'restUrl'   => esc_url_raw( rest_url( PMG_REST_NAMESPACE . '/' ) ),
+				// Query-string REST form (index.php?rest_route=…). Used as a fallback
+				// when the pretty /wp-json/ path is blocked/redirected by the host or a
+				// security layer (a common cause of 405 on POST requests).
+				'restRouteUrl' => esc_url_raw( add_query_arg( 'rest_route', '/' . PMG_REST_NAMESPACE . '/', home_url( '/' ) ) ),
 				'nonce'     => wp_create_nonce( 'wp_rest' ),
 				'nonceUrl'  => esc_url_raw( rest_url( PMG_REST_NAMESPACE . '/nonce' ) ),
 				'lottieUrl'     => esc_url_raw( $lottie_url ),

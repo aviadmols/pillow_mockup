@@ -61,8 +61,9 @@
 	 * POST JSON to a plugin REST endpoint. Transparently refreshes the nonce and
 	 * retries once if WordPress rejects the request as forbidden (stale nonce).
 	 */
-	function api(path, body, retried) {
-		return fetch(CFG.restUrl + path, {
+	function api(path, body, retried, useFallback) {
+		var base = (useFallback && CFG.restRouteUrl) ? CFG.restRouteUrl : CFG.restUrl;
+		return fetch(base + path, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -78,12 +79,18 @@
 			});
 		}).then(function (result) {
 			var d = result.data || {};
+			// 405 = the pretty /wp-json/ path was blocked or redirected (turning the
+			// POST into a GET). Retry once via the index.php?rest_route= form, which
+			// most hosts/security layers leave untouched.
+			if (result.status === 405 && !useFallback && CFG.restRouteUrl) {
+				return api(path, body, retried, true);
+			}
 			// Only retry on WordPress core "forbidden" shapes, never on our own
 			// 403 codes (e.g. need_details), so the details gate is preserved.
 			var coreForbidden = (result.status === 401 || result.status === 403) && (!d.code || d.code.indexOf('rest_') === 0);
 			if (coreForbidden && !retried) {
 				return refreshNonce().then(function () {
-					return api(path, body, true);
+					return api(path, body, true, useFallback);
 				});
 			}
 			return result;
@@ -868,6 +875,9 @@
 			var el = self.root.querySelector('[data-pmg-input="' + name + '"]');
 			return el ? el.value.trim() : '';
 		};
+		var firstName = get('first_name');
+		var lastName = get('last_name');
+		var email = get('email');
 		var address = get('address');
 		var apartment = get('apartment');
 		var city = get('city');
@@ -875,10 +885,13 @@
 		var zip = get('zip');
 		var phone = get('phone');
 
-		['address', 'apartment', 'city', 'state', 'zip', 'phone'].forEach(function (f) { self.fieldError(f, ''); });
+		['first_name', 'last_name', 'email', 'address', 'apartment', 'city', 'state', 'zip', 'phone'].forEach(function (f) { self.fieldError(f, ''); });
 
-		// Only the phone is required so we can reach the customer; the rest is optional.
+		// First name, email and phone are required so we can reach the customer
+		// and deliver the design; everything else is optional.
 		var valid = true;
+		if (!firstName) { this.fieldError('first_name', '•'); valid = false; }
+		if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { this.fieldError('email', '•'); valid = false; }
 		if (!phone) { this.fieldError('phone', '•'); valid = false; }
 		if (!valid) {
 			return;
@@ -889,6 +902,9 @@
 
 		api('lead', {
 			session: this.state.session,
+			first_name: firstName,
+			last_name: lastName,
+			email: email,
 			address: address,
 			apartment: apartment,
 			city: city,
