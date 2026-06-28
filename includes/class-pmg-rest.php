@@ -57,6 +57,19 @@ class PMG_Rest {
 				'callback'            => array( $this, 'get_nonce' ),
 			)
 		);
+
+		// Public, fire-and-forget counter for "open modal" button clicks. Kept
+		// permission-free so navigator.sendBeacon works on cached pages without a
+		// nonce header; it only ever writes an anonymous click count + IP.
+		register_rest_route(
+			PMG_REST_NAMESPACE,
+			'/track-open',
+			array(
+				'methods'             => 'POST',
+				'permission_callback' => '__return_true',
+				'callback'            => array( $this, 'track_open' ),
+			)
+		);
 	}
 
 	/**
@@ -84,6 +97,22 @@ class PMG_Rest {
 	 */
 	public function get_nonce() {
 		$response = new WP_REST_Response( array( 'nonce' => wp_create_nonce( 'wp_rest' ) ), 200 );
+		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
+		return $response;
+	}
+
+	/**
+	 * Record a single "open modal" button click (count + IP). Fire-and-forget:
+	 * always returns a tiny no-content response so the beacon never blocks.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function track_open( WP_REST_Request $request ) {
+		$session = preg_replace( '/[^a-zA-Z0-9]/', '', (string) $request->get_param( 'session' ) );
+		PMG_Leads::log_open( $this->client_ip(), substr( (string) $session, 0, 32 ) );
+
+		$response = new WP_REST_Response( null, 204 );
 		$response->header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0' );
 		return $response;
 	}

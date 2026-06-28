@@ -201,6 +201,9 @@
 			}
 			e.preventDefault();
 
+			// Count this open-modal click (non-blocking; never affects the UX).
+			trackOpen(pmgWidgetWithImage() || pmgWidgets[0]);
+
 			// If a mockup already exists this session, open straight to the
 			// preview (no file picker), regardless of how many widgets exist.
 			var w = pmgWidgetWithImage();
@@ -250,6 +253,75 @@
 			}
 		}
 		return null;
+	}
+
+	// Background scroll-lock state (saved page scroll offset while a modal is open).
+	var pmgScrollLock = { active: false, y: 0 };
+
+	/**
+	 * Lock the page behind the modal: pin <body> in place (position:fixed) at the
+	 * current scroll offset so the background can't scroll on any device, while the
+	 * modal's own scroll container stays scrollable. Idempotent.
+	 */
+	function pmgLockScroll() {
+		if (pmgScrollLock.active) {
+			return;
+		}
+		try {
+			pmgScrollLock.y = window.pageYOffset || document.documentElement.scrollTop || 0;
+			pmgScrollLock.active = true;
+			document.documentElement.classList.add('pmg-modal-open');
+			document.body.classList.add('pmg-modal-open');
+			document.body.style.top = (-pmgScrollLock.y) + 'px';
+		} catch (e) {}
+	}
+
+	/**
+	 * Release the scroll-lock and restore the previous scroll position.
+	 */
+	function pmgUnlockScroll() {
+		if (!pmgScrollLock.active) {
+			return;
+		}
+		try {
+			pmgScrollLock.active = false;
+			document.documentElement.classList.remove('pmg-modal-open');
+			document.body.classList.remove('pmg-modal-open');
+			document.body.style.top = '';
+			window.scrollTo(0, pmgScrollLock.y);
+		} catch (e) {}
+	}
+
+	// Debounce so an accidental double-click counts once.
+	var pmgLastTrack = 0;
+
+	/**
+	 * Fire-and-forget tracking of an open-modal button click (count + IP) so it
+	 * never blocks the UI or slows the page. Uses sendBeacon when available.
+	 *
+	 * @param {object} widget Source widget (for the session token), may be null.
+	 */
+	function trackOpen(widget) {
+		var now = Date.now ? Date.now() : new Date().getTime();
+		if (now - pmgLastTrack < 700) {
+			return;
+		}
+		pmgLastTrack = now;
+		try {
+			var url = CFG.restUrl + 'track-open';
+			var body = JSON.stringify({ session: widget && widget.state ? widget.state.session : '' });
+			if (navigator.sendBeacon) {
+				navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
+			} else {
+				fetch(url, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: body,
+					keepalive: true,
+					credentials: 'same-origin'
+				}).catch(function () {});
+			}
+		} catch (e) {}
 	}
 
 	/**
@@ -465,9 +537,7 @@
 		if (this.els.modal) {
 			this.els.modal.hidden = false;
 		}
-		try {
-			document.body.classList.add('pmg-modal-open');
-		} catch (e) {}
+		pmgLockScroll();
 	};
 
 	/**
@@ -478,9 +548,7 @@
 		if (this.els.modal) {
 			this.els.modal.hidden = true;
 		}
-		try {
-			document.body.classList.remove('pmg-modal-open');
-		} catch (e) {}
+		pmgUnlockScroll();
 		this.setState('idle');
 	};
 

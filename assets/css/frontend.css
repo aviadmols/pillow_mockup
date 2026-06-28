@@ -41,8 +41,17 @@
 	padding: 0;
 }
 
-/* Lock background scroll while the modal is open */
+/* Lock background scroll while the modal is open.
+   position:fixed (with a JS-restored scroll offset) is the only reliable way to
+   stop the page behind the popup from scrolling on iOS / touch devices. */
+html.pmg-modal-open {
+	overflow: hidden;
+}
+
 body.pmg-modal-open {
+	position: fixed;
+	inset-inline: 0;
+	width: 100%;
 	overflow: hidden;
 }
 
@@ -57,6 +66,7 @@ body.pmg-modal-open {
 	align-items: stretch;
 	justify-content: stretch;
 	padding: 0;
+	overscroll-behavior: contain;
 }
 
 .pmg__modal[hidden] {
@@ -79,6 +89,7 @@ body.pmg-modal-open {
 	height: 100%;
 	max-height: 100%;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	-webkit-overflow-scrolling: touch;
 	background: var(--pmg-paper);
 	border-radius: 0;

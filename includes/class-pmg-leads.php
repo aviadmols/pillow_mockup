@@ -310,4 +310,63 @@ class PMG_Leads {
 			'completed_leads' => $completed_leads,
 		);
 	}
+
+	/* --------------------------------------------------------------------- */
+	/* Modal-open click tracking                                             */
+	/* --------------------------------------------------------------------- */
+
+	/**
+	 * Record a single "open modal" button click. Cheap: one INSERT plus a
+	 * lifetime counter in an option, with occasional pruning to bound the table.
+	 *
+	 * @param string $ip      Visitor IP.
+	 * @param string $session Session token (may be empty).
+	 * @return void
+	 */
+	public static function log_open( $ip, $session ) {
+		global $wpdb;
+		$table = PMG_Activator::opens_table();
+
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$table,
+			array(
+				'ip'         => substr( (string) $ip, 0, 64 ),
+				'session'    => substr( (string) $session, 0, 64 ),
+				'created_at' => self::now(),
+			),
+			array( '%s', '%s', '%s' )
+		);
+
+		// Lifetime total (kept as the source of truth so the counter survives pruning).
+		update_option( 'pmg_open_count', self::open_count() + 1, false );
+
+		// Light, occasional pruning so the log never grows unbounded (~5% of inserts).
+		if ( 1 === wp_rand( 1, 20 ) ) {
+			$cutoff = gmdate( 'Y-m-d H:i:s', time() - 90 * DAY_IN_SECONDS );
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE created_at < %s", $cutoff ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		}
+	}
+
+	/**
+	 * Lifetime number of times the open-modal button was clicked.
+	 *
+	 * @return int
+	 */
+	public static function open_count() {
+		return (int) get_option( 'pmg_open_count', 0 );
+	}
+
+	/**
+	 * Most recent open-modal clicks (IP + time).
+	 *
+	 * @param int $limit Max rows.
+	 * @return array<int,array<string,mixed>>
+	 */
+	public static function recent_opens( $limit = 30 ) {
+		global $wpdb;
+		$table = PMG_Activator::opens_table();
+		$limit = max( 1, (int) $limit );
+		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT ip, session, created_at FROM {$table} ORDER BY id DESC LIMIT %d", $limit ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		return is_array( $rows ) ? $rows : array();
+	}
 }

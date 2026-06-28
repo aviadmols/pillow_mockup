@@ -23,6 +23,11 @@ class PMG_Activator {
 	const GENERATIONS_TABLE = 'pmg_generations';
 
 	/**
+	 * Modal-open click log table name (without prefix).
+	 */
+	const OPENS_TABLE = 'pmg_open_log';
+
+	/**
 	 * Fully qualified leads table name.
 	 *
 	 * @return string
@@ -40,6 +45,16 @@ class PMG_Activator {
 	public static function generations_table() {
 		global $wpdb;
 		return $wpdb->prefix . self::GENERATIONS_TABLE;
+	}
+
+	/**
+	 * Fully qualified modal-open log table name.
+	 *
+	 * @return string
+	 */
+	public static function opens_table() {
+		global $wpdb;
+		return $wpdb->prefix . self::OPENS_TABLE;
 	}
 
 	/**
@@ -80,6 +95,7 @@ class PMG_Activator {
 		$charset_collate = $wpdb->get_charset_collate();
 		$leads           = self::leads_table();
 		$generations     = self::generations_table();
+		$opens           = self::opens_table();
 
 		$leads_sql = "CREATE TABLE {$leads} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -130,8 +146,18 @@ class PMG_Activator {
 			KEY created_at (created_at)
 		) {$charset_collate};";
 
+		$opens_sql = "CREATE TABLE {$opens} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			ip varchar(64) NOT NULL DEFAULT '',
+			session varchar(64) NOT NULL DEFAULT '',
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY created_at (created_at)
+		) {$charset_collate};";
+
 		dbDelta( $leads_sql );
 		dbDelta( $generations_sql );
+		dbDelta( $opens_sql );
 
 		update_option( 'pmg_db_version', PMG_VERSION );
 	}

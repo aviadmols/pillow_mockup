@@ -220,6 +220,7 @@ class PMG_Admin {
 				<div class="pmg-card"><span class="pmg-card-label"><?php esc_html_e( 'Total cost', 'pillow-mockup-generator' ); ?></span><span class="pmg-card-value"><?php echo esc_html( $cost( $stats['total_cost'] ) ); ?></span></div>
 				<div class="pmg-card"><span class="pmg-card-label"><?php esc_html_e( 'Requests this month', 'pillow-mockup-generator' ); ?></span><span class="pmg-card-value"><?php echo esc_html( number_format_i18n( $stats['month_requests'] ) ); ?></span></div>
 				<div class="pmg-card"><span class="pmg-card-label"><?php esc_html_e( 'Cost this month', 'pillow-mockup-generator' ); ?></span><span class="pmg-card-value"><?php echo esc_html( $cost( $stats['month_cost'] ) ); ?></span></div>
+				<div class="pmg-card"><span class="pmg-card-label"><?php esc_html_e( 'Modal opens (button clicks)', 'pillow-mockup-generator' ); ?></span><span class="pmg-card-value"><?php echo esc_html( number_format_i18n( PMG_Leads::open_count() ) ); ?></span></div>
 			</div>
 
 			<h2><?php esc_html_e( 'Breakdown by stage', 'pillow-mockup-generator' ); ?></h2>
@@ -255,6 +256,27 @@ class PMG_Admin {
 							<td><?php echo esc_html( $pmg_err['type'] ); ?></td>
 							<td><?php echo esc_html( $pmg_err['model'] ); ?></td>
 							<td><?php echo '' !== (string) $pmg_err['error_message'] ? esc_html( $pmg_err['error_message'] ) : '—'; ?></td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+
+			<h2><?php esc_html_e( 'Recent modal opens (button clicks)', 'pillow-mockup-generator' ); ?></h2>
+			<?php $pmg_opens = PMG_Leads::recent_opens( 50 ); ?>
+			<?php if ( empty( $pmg_opens ) ) : ?>
+				<p class="pmg-hint"><?php esc_html_e( 'No button clicks recorded yet.', 'pillow-mockup-generator' ); ?></p>
+			<?php else : ?>
+				<table class="widefat striped pmg-table">
+					<thead><tr>
+						<th><?php esc_html_e( 'Date', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'IP address', 'pillow-mockup-generator' ); ?></th>
+					</tr></thead>
+					<tbody>
+					<?php foreach ( $pmg_opens as $pmg_open ) : ?>
+						<tr>
+							<td><?php echo esc_html( mysql2date( get_option( 'date_format' ) . ' H:i', $pmg_open['created_at'] ) ); ?></td>
+							<td><?php echo '' !== (string) $pmg_open['ip'] ? esc_html( $pmg_open['ip'] ) : '—'; ?></td>
 						</tr>
 					<?php endforeach; ?>
 					</tbody>
