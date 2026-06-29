@@ -67,13 +67,17 @@ class PMG_Generator {
 			$prompt = (string) PMG_Settings::get( 'cutout_prompt', PMG_Settings::default_cutout_prompt() );
 		}
 
-		$result = self::run( $session, $source_url, $model, $prompt, 'overlay', $lead_id );
+		// Strip the (chroma) background server-side so the saved overlay is a
+		// transparent PNG cut-out that composites onto the room mockup.
+		$transform = array( 'PMG_ImageTools', 'cutout_data_url' );
+
+		$result = self::run( $session, $source_url, $model, $prompt, 'overlay', $lead_id, $transform );
 
 		// The strict "pro" image models frequently block benign requests with a
 		// safety content_filter and return no image. Auto-retry once on the more
 		// permissive flash model so the Lab keeps working without manual config.
 		if ( is_wp_error( $result ) && 'pmg_no_image' === $result->get_error_code() && $model !== $fallback ) {
-			$retry = self::run( $session, $source_url, $fallback, $prompt, 'overlay', $lead_id );
+			$retry = self::run( $session, $source_url, $fallback, $prompt, 'overlay', $lead_id, $transform );
 			if ( ! is_wp_error( $retry ) ) {
 				return $retry;
 			}
@@ -89,11 +93,15 @@ class PMG_Generator {
 	 * @param string $source_url Reference image.
 	 * @param string $model      Model id.
 	 * @param string $prompt     Prompt.
-	 * @param string $type       'mockup' | 'cutout'.
-	 * @param int    $lead_id    Lead id (for logging).
+	 * @param string        $type      'mockup' | 'cutout' | 'overlay'.
+	 * @param int           $lead_id   Lead id (for logging).
+	 * @param callable|null $transform Optional callback applied to the generated
+	 *                                 image data URL before saving (e.g. background
+	 *                                 removal). Returns a data URL; on failure the
+	 *                                 original is kept.
 	 * @return array|WP_Error
 	 */
-	protected static function run( $session, $source_url, $model, $prompt, $type, $lead_id ) {
+	protected static function run( $session, $source_url, $model, $prompt, $type, $lead_id, $transform = null ) {
 		$client = new PMG_OpenRouter( PMG_Settings::get( 'api_key' ) );
 		$result = $client->generate_image( $model, $prompt, $source_url );
 
@@ -111,7 +119,15 @@ class PMG_Generator {
 			return $result;
 		}
 
-		$saved = PMG_Storage::save_data_url( $result['image_data_url'], $session, $type );
+		$image_data_url = (string) $result['image_data_url'];
+		if ( is_callable( $transform ) ) {
+			$processed = call_user_func( $transform, $image_data_url );
+			if ( is_string( $processed ) && '' !== $processed ) {
+				$image_data_url = $processed;
+			}
+		}
+
+		$saved = PMG_Storage::save_data_url( $image_data_url, $session, $type );
 		if ( is_wp_error( $saved ) ) {
 			PMG_Leads::log_generation(
 				array(

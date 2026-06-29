@@ -160,6 +160,105 @@
 	}
 
 	/* ----------------------------------------------------------------- */
+	/* Client-side background removal (chroma key)                        */
+	/* ----------------------------------------------------------------- */
+
+	/**
+	 * Remove the solid (chroma) background of the generated pillow entirely in
+	 * the browser, so it sits transparently on the room. The AI paints the
+	 * pillow on a solid colour; we flood-fill inward from the four borders and
+	 * turn every connected background-coloured pixel transparent. No server
+	 * library and no external service required.
+	 *
+	 * Always resolves: on any failure (CORS-tainted canvas, decode error, an
+	 * image that is already transparent) it returns the original URL untouched.
+	 */
+	function chromaKeyToDataUrl(url) {
+		return new Promise(function (resolve) {
+			var img = new Image();
+			img.crossOrigin = 'anonymous';
+			img.onload = function () {
+				try {
+					var w = img.naturalWidth, h = img.naturalHeight;
+					if (!w || !h) { resolve(url); return; }
+					var canvas = document.createElement('canvas');
+					canvas.width = w;
+					canvas.height = h;
+					var ctx = canvas.getContext('2d');
+					ctx.drawImage(img, 0, 0);
+					var imgData;
+					try { imgData = ctx.getImageData(0, 0, w, h); }
+					catch (e) { resolve(url); return; } // tainted canvas
+					var data = imgData.data;
+					if (cornerAlpha(data, w, h) < 200) { resolve(url); return; } // already cut out
+					removeBorderBackground(data, w, h);
+					ctx.putImageData(imgData, 0, 0);
+					resolve(canvas.toDataURL('image/png'));
+				} catch (e) {
+					resolve(url);
+				}
+			};
+			img.onerror = function () { resolve(url); };
+			img.src = url;
+		});
+	}
+
+	function cornerAlpha(data, w, h) {
+		var idx = [0, (w - 1) * 4, (h - 1) * w * 4, ((h - 1) * w + (w - 1)) * 4];
+		var sum = 0;
+		for (var i = 0; i < idx.length; i++) { sum += data[idx[i] + 3]; }
+		return sum / idx.length;
+	}
+
+	function cornerColor(data, w, h) {
+		var idx = [0, (w - 1) * 4, (h - 1) * w * 4, ((h - 1) * w + (w - 1)) * 4];
+		var r = 0, g = 0, b = 0;
+		for (var i = 0; i < idx.length; i++) {
+			r += data[idx[i]];
+			g += data[idx[i] + 1];
+			b += data[idx[i] + 2];
+		}
+		return [r / idx.length, g / idx.length, b / idx.length];
+	}
+
+	function removeBorderBackground(data, w, h) {
+		var bg = cornerColor(data, w, h);
+		var thresh = 7000; // squared RGB distance tolerance
+		var total = w * h;
+		var visited = new Uint8Array(total);
+		var stack = [];
+
+		function matches(i) {
+			var p = i * 4;
+			if (data[p + 3] === 0) { return true; }
+			var dr = data[p] - bg[0];
+			var dg = data[p + 1] - bg[1];
+			var db = data[p + 2] - bg[2];
+			return (dr * dr + dg * dg + db * db) <= thresh;
+		}
+
+		function seed(i) {
+			if (visited[i]) { return; }
+			if (matches(i)) { visited[i] = 1; stack.push(i); }
+		}
+
+		var x, y;
+		for (x = 0; x < w; x++) { seed(x); seed((h - 1) * w + x); }
+		for (y = 0; y < h; y++) { seed(y * w); seed(y * w + (w - 1)); }
+
+		while (stack.length) {
+			var i = stack.pop();
+			data[i * 4 + 3] = 0;
+			x = i % w;
+			y = (i - x) / w;
+			if (x > 0) { var l = i - 1; if (!visited[l] && matches(l)) { visited[l] = 1; stack.push(l); } }
+			if (x < w - 1) { var rr = i + 1; if (!visited[rr] && matches(rr)) { visited[rr] = 1; stack.push(rr); } }
+			if (y > 0) { var u = i - w; if (!visited[u] && matches(u)) { visited[u] = 1; stack.push(u); } }
+			if (y < h - 1) { var dn = i + w; if (!visited[dn] && matches(dn)) { visited[dn] = 1; stack.push(dn); } }
+		}
+	}
+
+	/* ----------------------------------------------------------------- */
 	/* Widget                                                             */
 	/* ----------------------------------------------------------------- */
 
@@ -266,11 +365,14 @@
 	};
 
 	LabWidget.prototype.showOverlay = function (url) {
+		var self = this;
 		if (!this.els.overlay) { return; }
-		this.els.overlay.src = url;
-		this.els.overlay.hidden = false;
-		if (this.els.sizes) { this.els.sizes.hidden = false; }
-		this.applyLayout();
+		chromaKeyToDataUrl(url).then(function (finalUrl) {
+			self.els.overlay.src = finalUrl;
+			self.els.overlay.hidden = false;
+			if (self.els.sizes) { self.els.sizes.hidden = false; }
+			self.applyLayout();
+		});
 	};
 
 	/**

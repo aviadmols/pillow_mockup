@@ -93,7 +93,7 @@ class PMG_Lab {
 			'room_url'    => '',
 			'ref_url'     => '',
 			'room_prompt' => 'A photorealistic modern living room interior with a single empty sofa, soft natural daylight, warm neutral tones, and clear empty space in the middle of the sofa where a decorative cushion would sit. Do not place any pillow or cushion on the sofa. Clean, realistic, high-quality interior photography.',
-			'cutout_prompt' => 'From the reference photo, create a single realistic decorative throw pillow with the photo\'s main subject printed across its front fabric. Show the pillow straight-on, plump and three-dimensional with soft, natural fabric folds. Output ONLY the pillow, perfectly isolated on a fully transparent background (PNG with alpha). No room, no sofa, no surface, no background, and no drop shadow. Keep crisp, clean edges around the pillow so it can be composited cleanly onto another image.',
+			'cutout_prompt' => self::default_cutout_prompt(),
 			'pos_x'       => 50.0,
 			'pos_y'       => 56.0,
 			'base_width'  => 34.0,
@@ -102,6 +102,29 @@ class PMG_Lab {
 				'medium' => 1.0,
 				'large'  => 1.25,
 			),
+		);
+	}
+
+	/**
+	 * Default chroma-key cut-out prompt. The pillow is rendered on a flat green
+	 * background which is removed server-side (PMG_ImageTools) to a transparent
+	 * PNG, so it composites cleanly onto the room mockup.
+	 *
+	 * @return string
+	 */
+	public static function default_cutout_prompt() {
+		return 'From the reference photo, create a single realistic decorative throw pillow (square cushion) with the photo\'s main subject printed across the entire front fabric. Make the pillow plump and three-dimensional with soft, natural fabric folds and softly rounded corners. Center the pillow with clearly visible empty margin on all four sides and do not let it touch the edges of the image. Place it on a perfectly flat, uniform, solid chroma-key green background (pure RGB 0,255,0). The green must be one single flat colour filling the entire background, with no gradient, no texture, no pattern, no shadow and no reflection. Do not add any shadow under or around the pillow.';
+	}
+
+	/**
+	 * Earlier default cut-out prompts. Used to auto-upgrade installs that never
+	 * customised the prompt to the current chroma-key version.
+	 *
+	 * @return string[]
+	 */
+	protected static function legacy_cutout_prompts() {
+		return array(
+			'From the reference photo, create a single realistic decorative throw pillow with the photo\'s main subject printed across its front fabric. Show the pillow straight-on, plump and three-dimensional with soft, natural fabric folds. Output ONLY the pillow, perfectly isolated on a fully transparent background (PNG with alpha). No room, no sofa, no surface, no background, and no drop shadow. Keep crisp, clean edges around the pillow so it can be composited cleanly onto another image.',
 		);
 	}
 
@@ -117,6 +140,14 @@ class PMG_Lab {
 		if ( ! is_array( $merged['scales'] ) ) {
 			$merged['scales'] = self::defaults()['scales'];
 		}
+
+		// Auto-upgrade an empty or never-customised (legacy) prompt to the
+		// current chroma-key prompt without clobbering a user's own edits.
+		$prompt = isset( $merged['cutout_prompt'] ) ? trim( (string) $merged['cutout_prompt'] ) : '';
+		if ( '' === $prompt || in_array( $prompt, self::legacy_cutout_prompts(), true ) ) {
+			$merged['cutout_prompt'] = self::default_cutout_prompt();
+		}
+
 		return $merged;
 	}
 
