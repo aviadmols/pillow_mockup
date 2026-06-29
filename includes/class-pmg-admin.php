@@ -49,6 +49,7 @@ class PMG_Admin {
 			58
 		);
 		add_submenu_page( 'pmg-dashboard', __( 'Dashboard', 'pillow-mockup-generator' ), __( 'Dashboard', 'pillow-mockup-generator' ), self::CAP, 'pmg-dashboard', array( $this, 'render_dashboard' ) );
+		add_submenu_page( 'pmg-dashboard', __( 'Funnel by page', 'pillow-mockup-generator' ), __( 'Funnel by page', 'pillow-mockup-generator' ), self::CAP, 'pmg-funnel-pages', array( $this, 'render_funnel_pages' ) );
 		add_submenu_page( 'pmg-dashboard', __( 'Registrants', 'pillow-mockup-generator' ), __( 'Registrants', 'pillow-mockup-generator' ), self::CAP, 'pmg-registrants', array( $this, 'render_registrants' ) );
 		add_submenu_page( 'pmg-dashboard', __( 'Settings', 'pillow-mockup-generator' ), __( 'Settings', 'pillow-mockup-generator' ), self::CAP, 'pmg-settings', array( $this, 'render_settings' ) );
 	}
@@ -384,6 +385,72 @@ class PMG_Admin {
 				<?php esc_html_e( 'Embed the widget anywhere with the shortcode:', 'pillow-mockup-generator' ); ?>
 				<code>[pillow_mockup]</code>
 			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Per-page funnel: CTA -> Generate -> Size -> Purchase for each page the
+	 * widget appears on, with the page's CTA->Purchase conversion rate.
+	 *
+	 * @return void
+	 */
+	public function render_funnel_pages() {
+		$pmg_pages = PMG_Leads::funnel_by_page();
+		?>
+		<div class="wrap pmg-wrap">
+			<h1><?php esc_html_e( 'Funnel by page', 'pillow-mockup-generator' ); ?></h1>
+			<p class="pmg-hint"><?php esc_html_e( 'Unique visitors (by IP) for each funnel step, broken down by the page where it happened. Events recorded before this update appear under "Other / unknown".', 'pillow-mockup-generator' ); ?></p>
+
+			<?php if ( empty( $pmg_pages ) ) : ?>
+				<p class="pmg-hint"><?php esc_html_e( 'No per-page funnel data yet.', 'pillow-mockup-generator' ); ?></p>
+			<?php else : ?>
+				<table class="widefat striped pmg-table">
+					<thead><tr>
+						<th><?php esc_html_e( 'Page', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'CTA clicks', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'Created image', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'Chose size', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'Purchased', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'CTA → Purchase', 'pillow-mockup-generator' ); ?></th>
+					</tr></thead>
+					<tbody>
+					<?php
+					foreach ( $pmg_pages as $pmg_page ) :
+						$pmg_pid  = (int) $pmg_page['post_id'];
+						$pmg_cta  = (int) $pmg_page['cta'];
+						$pmg_conv = $pmg_cta > 0 ? round( ( (int) $pmg_page['purchase'] / $pmg_cta ) * 100, 1 ) : 0.0;
+
+						if ( $pmg_pid > 0 && ( $pmg_title = get_the_title( $pmg_pid ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition
+							$pmg_edit  = get_edit_post_link( $pmg_pid );
+							$pmg_label = $pmg_title;
+						} else {
+							$pmg_edit  = '';
+							$pmg_label = __( 'Other / unknown', 'pillow-mockup-generator' );
+						}
+						?>
+						<tr>
+							<td>
+								<?php if ( $pmg_edit ) : ?>
+									<a href="<?php echo esc_url( $pmg_edit ); ?>"><?php echo esc_html( $pmg_label ); ?></a>
+								<?php else : ?>
+									<?php echo esc_html( $pmg_label ); ?>
+								<?php endif; ?>
+								<?php if ( $pmg_pid > 0 ) : ?>
+									<span class="pmg-hint">(#<?php echo esc_html( (string) $pmg_pid ); ?>)</span>
+								<?php endif; ?>
+							</td>
+							<td><strong><?php echo esc_html( number_format_i18n( $pmg_cta ) ); ?></strong></td>
+							<td><?php echo esc_html( number_format_i18n( (int) $pmg_page['generate'] ) ); ?></td>
+							<td><?php echo esc_html( number_format_i18n( (int) $pmg_page['size'] ) ); ?></td>
+							<td><?php echo esc_html( number_format_i18n( (int) $pmg_page['purchase'] ) ); ?></td>
+							<td><?php echo esc_html( $pmg_conv . '%' ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+				<p class="pmg-hint"><?php esc_html_e( 'Each visitor is counted once per step per page, identified by IP address.', 'pillow-mockup-generator' ); ?></p>
+			<?php endif; ?>
 		</div>
 		<?php
 	}

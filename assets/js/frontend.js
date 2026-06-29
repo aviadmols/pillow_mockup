@@ -316,7 +316,11 @@
 	function trackBeacon(payload) {
 		try {
 			var url = CFG.restUrl + 'track-open';
-			var body = JSON.stringify(payload || {});
+			payload = payload || {};
+			if (typeof payload.pageId === 'undefined') {
+				payload.pageId = CFG.pageId || 0;
+			}
+			var body = JSON.stringify(payload);
 			if (navigator.sendBeacon) {
 				navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
 			} else {
@@ -779,7 +783,8 @@
 
 		api('generate', {
 			session: this.state.session,
-			image: imageDataUrl || ''
+			image: imageDataUrl || '',
+			pageId: CFG.pageId || 0
 		}).then(function (res) {
 			self.busy(false);
 			var d = res.data;
@@ -986,7 +991,7 @@
 		this.setState('loading');
 		this.busy(true);
 
-		var payload = { session: this.state.session, mockup: this.state.selectedUrl };
+		var payload = { session: this.state.session, mockup: this.state.selectedUrl, pageId: CFG.pageId || 0 };
 		if (this.state.size && this.state.size.id) {
 			payload.size = this.state.size.id;
 		}

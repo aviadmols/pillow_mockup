@@ -192,10 +192,12 @@ class PMG_Activator {
 			ip varchar(64) NOT NULL DEFAULT '',
 			stage varchar(20) NOT NULL DEFAULT '',
 			session varchar(64) NOT NULL DEFAULT '',
+			post_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			created_at datetime NOT NULL,
 			PRIMARY KEY  (id),
-			UNIQUE KEY ip_stage (ip,stage),
-			KEY stage (stage)
+			UNIQUE KEY ip_stage_post (ip,stage,post_id),
+			KEY stage (stage),
+			KEY post_id (post_id)
 		) {$charset_collate};";
 
 		$views_sql = "CREATE TABLE {$views} (
@@ -214,7 +216,40 @@ class PMG_Activator {
 		dbDelta( $events_sql );
 		dbDelta( $views_sql );
 
+		self::migrate_events_post_id();
+
 		update_option( 'pmg_db_version', PMG_VERSION );
+	}
+
+	/**
+	 * Migrate the events table to the per-page dedup key. dbDelta never drops or
+	 * alters existing keys, so the old UNIQUE KEY (ip,stage) must be removed
+	 * explicitly — otherwise it keeps blocking a second row for the same IP and
+	 * stage on a different page. Idempotent and safe to run on every upgrade.
+	 *
+	 * @return void
+	 */
+	protected static function migrate_events_post_id() {
+		global $wpdb;
+		$events = self::events_table();
+
+		// Add the post_id column if dbDelta hasn't (older MySQL edge cases).
+		$has_col = $wpdb->get_results( "SHOW COLUMNS FROM {$events} LIKE 'post_id'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		if ( empty( $has_col ) ) {
+			$wpdb->query( "ALTER TABLE {$events} ADD post_id bigint(20) unsigned NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		}
+
+		// Drop the legacy unique key so per-page rows are allowed.
+		$old_key = $wpdb->get_results( "SHOW INDEX FROM {$events} WHERE Key_name = 'ip_stage'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		if ( ! empty( $old_key ) ) {
+			$wpdb->query( "ALTER TABLE {$events} DROP INDEX ip_stage" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		}
+
+		// Add the new per-page unique key if it isn't there yet.
+		$new_key = $wpdb->get_results( "SHOW INDEX FROM {$events} WHERE Key_name = 'ip_stage_post'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		if ( empty( $new_key ) ) {
+			$wpdb->query( "ALTER TABLE {$events} ADD UNIQUE KEY ip_stage_post (ip,stage,post_id)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		}
 	}
 
 	/**

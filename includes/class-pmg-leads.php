@@ -364,9 +364,10 @@ class PMG_Leads {
 	 * @param string $ip      Visitor IP.
 	 * @param string $stage   Funnel stage: cta | generate | size | purchase.
 	 * @param string $session Session token (optional).
+	 * @param int    $post_id Page/post the event happened on (0 = unknown).
 	 * @return void
 	 */
-	public static function log_event( $ip, $stage, $session = '' ) {
+	public static function log_event( $ip, $stage, $session = '', $post_id = 0 ) {
 		global $wpdb;
 		$ip = substr( (string) $ip, 0, 64 );
 		if ( '' === $ip ) {
@@ -375,10 +376,11 @@ class PMG_Leads {
 		$table = PMG_Activator::events_table();
 		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			$wpdb->prepare(
-				"INSERT IGNORE INTO {$table} (ip, stage, session, created_at) VALUES (%s, %s, %s, %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"INSERT IGNORE INTO {$table} (ip, stage, session, post_id, created_at) VALUES (%s, %s, %s, %d, %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$ip,
 				substr( (string) $stage, 0, 20 ),
 				substr( (string) $session, 0, 64 ),
+				max( 0, (int) $post_id ),
 				self::now()
 			)
 		);
@@ -448,7 +450,9 @@ class PMG_Leads {
 			'size'     => 0,
 			'purchase' => 0,
 		);
-		$rows = $wpdb->get_results( "SELECT stage, COUNT(*) AS c FROM {$table} GROUP BY stage", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		// COUNT(DISTINCT ip): events are now stored once per IP per stage per
+		// page, so the global funnel must dedupe by IP to stay "unique visitors".
+		$rows = $wpdb->get_results( "SELECT stage, COUNT(DISTINCT ip) AS c FROM {$table} GROUP BY stage", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
 		if ( is_array( $rows ) ) {
 			foreach ( $rows as $row ) {
 				if ( isset( $map[ $row['stage'] ] ) ) {
@@ -457,6 +461,46 @@ class PMG_Leads {
 			}
 		}
 		return $map;
+	}
+
+	/**
+	 * Per-page funnel: unique-IP counts for each stage grouped by the page the
+	 * event happened on. Pages are ordered by CTA clicks (descending).
+	 *
+	 * @return array<int,array{post_id:int,cta:int,generate:int,size:int,purchase:int}>
+	 */
+	public static function funnel_by_page() {
+		global $wpdb;
+		$table = PMG_Activator::events_table();
+		$rows  = $wpdb->get_results( "SELECT post_id, stage, COUNT(DISTINCT ip) AS c FROM {$table} WHERE stage IN ('cta','generate','size','purchase') GROUP BY post_id, stage", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+
+		$pages = array();
+		if ( is_array( $rows ) ) {
+			foreach ( $rows as $row ) {
+				$pid = (int) $row['post_id'];
+				if ( ! isset( $pages[ $pid ] ) ) {
+					$pages[ $pid ] = array(
+						'post_id'  => $pid,
+						'cta'      => 0,
+						'generate' => 0,
+						'size'     => 0,
+						'purchase' => 0,
+					);
+				}
+				if ( isset( $pages[ $pid ][ $row['stage'] ] ) ) {
+					$pages[ $pid ][ $row['stage'] ] = (int) $row['c'];
+				}
+			}
+		}
+
+		usort(
+			$pages,
+			function ( $a, $b ) {
+				return $b['cta'] - $a['cta'];
+			}
+		);
+
+		return array_values( $pages );
 	}
 
 	/**

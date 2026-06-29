@@ -101,6 +101,7 @@ class PMG_Shortcode {
 				'nonce'     => wp_create_nonce( 'wp_rest' ),
 				'nonceUrl'  => esc_url_raw( rest_url( PMG_REST_NAMESPACE . '/nonce' ) ),
 				'lottieUrl'     => esc_url_raw( $lottie_url ),
+				'pageId'        => (int) get_the_ID(),
 				'maxPx'         => (int) PMG_Settings::get( 'max_upload_px', 1280 ),
 				'attemptsLabel' => (string) PMG_Settings::get( 'text_attempts_left', 'attempts left' ),
 				'maxMockups'    => (int) PMG_Settings::get( 'max_mockups', 3 ),

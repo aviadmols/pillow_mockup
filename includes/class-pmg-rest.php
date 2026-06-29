@@ -129,18 +129,19 @@ class PMG_Rest {
 		$session = substr( (string) $session, 0, 32 );
 		$ip      = $this->client_ip();
 		$stage   = sanitize_key( (string) $request->get_param( 'stage' ) );
+		$post_id = (int) $request->get_param( 'pageId' );
 
 		if ( 'view' === $stage ) {
 			// Unique daily page view (one row per IP per day).
 			PMG_Leads::log_view( $ip );
 		} elseif ( 'size' === $stage ) {
 			// Funnel: visitor chose a size.
-			PMG_Leads::log_event( $ip, 'size', $session );
+			PMG_Leads::log_event( $ip, 'size', $session, $post_id );
 		} else {
 			// Default: a CTA/open-modal click — keep the raw counter and the
 			// per-IP funnel "cta" stage.
 			PMG_Leads::log_open( $ip, $session );
-			PMG_Leads::log_event( $ip, 'cta', $session );
+			PMG_Leads::log_event( $ip, 'cta', $session, $post_id );
 		}
 
 		$response = new WP_REST_Response( null, 204 );
@@ -245,7 +246,7 @@ class PMG_Rest {
 		$attempts_left = max( 0, $max_mockups - $total_done );
 
 		// Funnel: visitor successfully created a mockup (once per IP).
-		PMG_Leads::log_event( $this->client_ip(), 'generate', $session );
+		PMG_Leads::log_event( $this->client_ip(), 'generate', $session, (int) $request->get_param( 'pageId' ) );
 
 		return new WP_REST_Response(
 			array(
@@ -442,7 +443,7 @@ class PMG_Rest {
 		}
 
 		// Funnel: visitor completed the purchase (once per IP).
-		PMG_Leads::log_event( $this->client_ip(), 'purchase', $session );
+		PMG_Leads::log_event( $this->client_ip(), 'purchase', $session, (int) $request->get_param( 'pageId' ) );
 
 		return new WP_REST_Response(
 			array(
