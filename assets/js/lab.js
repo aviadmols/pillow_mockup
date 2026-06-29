@@ -94,15 +94,25 @@
 	}
 
 	/**
-	 * Create the overlay: admin-ajax first; if it is unreachable (network error /
-	 * status 0), fall back to the REST route.
+	 * Create the overlay. Some hosts block POST to every endpoint except the
+	 * original (allow-listed) REST routes, so the dedicated /room-overlay route
+	 * and admin-ajax both return 405. We therefore piggyback on /generate (the
+	 * proven-working endpoint) via mode=lab_overlay, and only fall back to the
+	 * dedicated transports if that path is itself blocked/unreachable.
 	 */
 	function requestOverlay(body) {
-		return ajaxOverlay(body).then(function (res) {
-			if (res && res.status && res.status !== 0) {
+		var genBody = { mode: 'lab_overlay', image: body.image, session: body.session };
+		return api('generate', genBody).then(function (res) {
+			var blocked = !res || res.status === 0 || res.status === 404 || res.status === 405;
+			if (!blocked) {
 				return res;
 			}
-			return api('room-overlay', body);
+			return ajaxOverlay(body).then(function (r2) {
+				if (r2 && r2.status && r2.status !== 0) {
+					return r2;
+				}
+				return api('room-overlay', body);
+			});
 		});
 	}
 

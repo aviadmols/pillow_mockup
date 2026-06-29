@@ -163,6 +163,18 @@ class PMG_Rest {
 			return new WP_Error( 'pmg_not_configured', __( 'The mockup service is not configured yet.', 'pillow-mockup-generator' ), array( 'status' => 503 ) );
 		}
 
+		// Experimental Lab piggybacks on this (allow-listed) endpoint: some hosts
+		// block POST to every REST path except the original ones, so the isolated
+		// /room-overlay route and admin-ajax both 405. When mode=lab_overlay we
+		// hand off to the Lab and return early — the normal flow is untouched.
+		if ( 'lab_overlay' === sanitize_key( (string) $request->get_param( 'mode' ) ) ) {
+			$lab = PMG_Plugin::instance()->lab;
+			if ( $lab instanceof PMG_Lab ) {
+				return $lab->lab_cutout( $request );
+			}
+			return new WP_Error( 'pmg_not_configured', __( 'The mockup service is not configured yet.', 'pillow-mockup-generator' ), array( 'status' => 503 ) );
+		}
+
 		if ( $this->rate_limited() ) {
 			return new WP_REST_Response(
 				array(
