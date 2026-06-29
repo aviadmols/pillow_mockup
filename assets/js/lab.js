@@ -53,6 +53,56 @@
 				return refreshNonce().then(function () { return api(path, body, true, useFallback); });
 			}
 			return result;
+		}).catch(function () {
+			return { status: 0, ok: false, data: {} };
+		});
+	}
+
+	/**
+	 * POST via admin-ajax.php (multipart) — the most reliable transport on hosts
+	 * where the REST route is blocked/redirected (returns 405). Refreshes the
+	 * nonce once on a 403.
+	 */
+	function ajaxOverlay(body, retried) {
+		if (!CFG.ajaxUrl) {
+			return Promise.resolve({ status: 0, ok: false, data: {} });
+		}
+		var fd = new FormData();
+		fd.append('action', CFG.ajaxAction || 'pmg_room_overlay');
+		fd.append('_wpnonce', nonce);
+		if (body) {
+			Object.keys(body).forEach(function (k) { fd.append(k, body[k]); });
+		}
+		return fetch(CFG.ajaxUrl, {
+			method: 'POST',
+			credentials: 'same-origin',
+			body: fd
+		}).then(function (res) {
+			return res.json().then(function (data) {
+				return { status: res.status, ok: res.ok, data: data || {} };
+			}).catch(function () {
+				return { status: res.status, ok: res.ok, data: {} };
+			});
+		}).then(function (result) {
+			if (result.status === 403 && !retried) {
+				return refreshNonce().then(function () { return ajaxOverlay(body, true); });
+			}
+			return result;
+		}).catch(function () {
+			return { status: 0, ok: false, data: {} };
+		});
+	}
+
+	/**
+	 * Create the overlay: admin-ajax first; if it is unreachable (network error /
+	 * status 0), fall back to the REST route.
+	 */
+	function requestOverlay(body) {
+		return ajaxOverlay(body).then(function (res) {
+			if (res && res.status && res.status !== 0) {
+				return res;
+			}
+			return api('room-overlay', body);
 		});
 	}
 
@@ -189,7 +239,7 @@
 		this.busy(true);
 
 		fileToDataUrl(file, CFG.maxPx).then(function (dataUrl) {
-			return api('room-overlay', { image: dataUrl, session: self.session });
+			return requestOverlay({ image: dataUrl, session: self.session });
 		}).then(function (res) {
 			self.busy(false);
 			var d = res.data || {};

@@ -66,6 +66,12 @@ class PMG_Lab {
 		// The REST route is registered by PMG_Rest (the proven controller) so it
 		// goes live exactly like the working endpoints; see PMG_Rest::routes().
 
+		// admin-ajax transport (primary). admin-ajax.php is the most universally
+		// available POST endpoint in WordPress and is not subject to the REST
+		// rewrite/allow-list/proxy rules that were returning 405 for the REST route.
+		add_action( 'wp_ajax_pmg_room_overlay', array( $this, 'ajax_room_overlay' ) );
+		add_action( 'wp_ajax_nopriv_pmg_room_overlay', array( $this, 'ajax_room_overlay' ) );
+
 		if ( is_admin() ) {
 			add_action( 'admin_menu', array( $this, 'menu' ), 20 );
 			add_action( 'admin_init', array( $this, 'handle_actions' ) );
@@ -173,6 +179,8 @@ class PMG_Lab {
 			array(
 				'restUrl'      => esc_url_raw( rest_url( PMG_REST_NAMESPACE . '/' ) ),
 				'restRouteUrl' => esc_url_raw( add_query_arg( 'rest_route', '/' . PMG_REST_NAMESPACE . '/', home_url( '/' ) ) ),
+				'ajaxUrl'      => esc_url_raw( admin_url( 'admin-ajax.php' ) ),
+				'ajaxAction'   => 'pmg_room_overlay',
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
 				'nonceUrl'     => esc_url_raw( rest_url( PMG_REST_NAMESPACE . '/nonce' ) ),
 				'roomUrl'      => esc_url_raw( (string) $cfg['room_url'] ),
@@ -228,28 +236,48 @@ class PMG_Lab {
 	}
 
 	/**
-	 * Generate a transparent pillow cut-out for the uploaded image.
+	 * Shared overlay builder used by both transports (REST + admin-ajax).
 	 *
-	 * @param WP_REST_Request $request Request.
-	 * @return WP_REST_Response|WP_Error
+	 * @param string $image       Uploaded data URL.
+	 * @param mixed  $session_raw Raw session token.
+	 * @return array{session:string,url:string}|WP_Error
 	 */
-	public function lab_cutout( WP_REST_Request $request ) {
+	protected function build_overlay( $image, $session_raw ) {
 		if ( ! PMG_Settings::is_configured() ) {
 			return new WP_Error( 'pmg_not_configured', __( 'The mockup service is not configured yet.', 'pillow-mockup-generator' ), array( 'status' => 503 ) );
 		}
 
-		$image = (string) $request->get_param( 'image' );
+		$image = (string) $image;
 		if ( '' === trim( $image ) ) {
 			return new WP_Error( 'pmg_no_image', __( 'No image provided.', 'pillow-mockup-generator' ), array( 'status' => 400 ) );
 		}
 
-		$session = $this->lab_session( $request->get_param( 'session' ) );
+		$session = $this->lab_session( $session_raw );
+		$cfg     = self::get();
+		$prompt  = isset( $cfg['cutout_prompt'] ) ? (string) $cfg['cutout_prompt'] : '';
 
-		$cfg    = self::get();
-		$prompt = isset( $cfg['cutout_prompt'] ) ? (string) $cfg['cutout_prompt'] : '';
 		$cutout = PMG_Generator::generate_overlay( $session, $image, $prompt, 0 );
 		if ( is_wp_error( $cutout ) ) {
-			$data   = $cutout->get_error_data();
+			return $cutout;
+		}
+
+		return array(
+			'session' => $session,
+			'url'     => $cutout['url'],
+		);
+	}
+
+	/**
+	 * Generate a transparent pillow cut-out for the uploaded image (REST).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return WP_REST_Response
+	 */
+	public function lab_cutout( WP_REST_Request $request ) {
+		$result = $this->build_overlay( $request->get_param( 'image' ), $request->get_param( 'session' ) );
+
+		if ( is_wp_error( $result ) ) {
+			$data   = $result->get_error_data();
 			$status = ( is_array( $data ) && ! empty( $data['status'] ) ) ? (int) $data['status'] : 500;
 			return new WP_REST_Response(
 				array(
@@ -263,8 +291,57 @@ class PMG_Lab {
 		return new WP_REST_Response(
 			array(
 				'code'    => 'ok',
-				'session' => $session,
-				'url'     => $cutout['url'],
+				'session' => $result['session'],
+				'url'     => $result['url'],
+			),
+			200
+		);
+	}
+
+	/**
+	 * Generate a transparent pillow cut-out (admin-ajax transport).
+	 *
+	 * Primary transport: admin-ajax.php reliably accepts POST on hosts where the
+	 * REST route is blocked/redirected (the source of the 405). Always returns
+	 * JSON and exits.
+	 *
+	 * @return void
+	 */
+	public function ajax_room_overlay() {
+		$nonce = isset( $_POST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+			wp_send_json(
+				array(
+					'code'    => 'rest_cookie_invalid_nonce',
+					'message' => __( 'Your session expired. Please refresh and try again.', 'pillow-mockup-generator' ),
+				),
+				403
+			);
+		}
+
+		// The image is a base64 data URL; it must NOT be run through
+		// sanitize_text_field (which would corrupt it). The nonce is verified above.
+		$image   = isset( $_POST['image'] ) ? (string) wp_unslash( $_POST['image'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$session = isset( $_POST['session'] ) ? wp_unslash( $_POST['session'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+
+		$result = $this->build_overlay( $image, $session );
+		if ( is_wp_error( $result ) ) {
+			$data   = $result->get_error_data();
+			$status = ( is_array( $data ) && ! empty( $data['status'] ) ) ? (int) $data['status'] : 500;
+			wp_send_json(
+				array(
+					'code'    => 'error',
+					'message' => __( 'We couldn\'t create your pillow. Please try again.', 'pillow-mockup-generator' ),
+				),
+				$status
+			);
+		}
+
+		wp_send_json(
+			array(
+				'code'    => 'ok',
+				'session' => $result['session'],
+				'url'     => $result['url'],
 			),
 			200
 		);
