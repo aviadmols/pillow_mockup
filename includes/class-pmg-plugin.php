@@ -41,6 +41,13 @@ class PMG_Plugin {
 	public $admin;
 
 	/**
+	 * Experimental "Lab" controller (isolated room-overlay flow).
+	 *
+	 * @var PMG_Lab
+	 */
+	public $lab;
+
+	/**
 	 * Get the singleton.
 	 *
 	 * @return PMG_Plugin
@@ -65,6 +72,10 @@ class PMG_Plugin {
 
 		$this->shortcode = new PMG_Shortcode();
 		$this->shortcode->register();
+
+		// Experimental, fully isolated room-overlay flow ([pillow_mockup_lab]).
+		$this->lab = new PMG_Lab();
+		$this->lab->register();
 
 		if ( is_admin() ) {
 			$this->admin = new PMG_Admin();

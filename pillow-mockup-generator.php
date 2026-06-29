@@ -3,7 +3,7 @@
  * Plugin Name:       Pillow Mockup Generator
  * Plugin URI:        https://example.com/pillow-mockup-generator
  * Description:        Mixtiles-style widget that turns a customer photo into a custom-shaped pillow mockup using OpenRouter, captures leads, and saves the original / mockup / print-ready cut-out images.
- * Version:           2.5.0
+ * Version:           2.6.0
  * Author:            Aviad
  * License:           GPL-2.0-or-later
  * Text Domain:       pillow-mockup-generator
@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PMG_VERSION', '2.5.0' );
+define( 'PMG_VERSION', '2.6.0' );
 define( 'PMG_PLUGIN_FILE', __FILE__ );
 define( 'PMG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PMG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -31,6 +31,7 @@ require_once PMG_PLUGIN_DIR . 'includes/class-pmg-emailer.php';
 require_once PMG_PLUGIN_DIR . 'includes/class-pmg-rest.php';
 require_once PMG_PLUGIN_DIR . 'includes/class-pmg-shortcode.php';
 require_once PMG_PLUGIN_DIR . 'includes/class-pmg-admin.php';
+require_once PMG_PLUGIN_DIR . 'includes/class-pmg-lab.php';
 require_once PMG_PLUGIN_DIR . 'includes/class-pmg-plugin.php';
 
 register_activation_hook( __FILE__, array( 'PMG_Activator', 'activate' ) );
