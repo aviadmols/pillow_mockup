@@ -385,6 +385,56 @@ class PMG_Leads {
 	}
 
 	/**
+	 * Record a unique daily page view. Deduplicated to one row per IP per day
+	 * via INSERT IGNORE on the unique (ip, day) key, so it stays light and the
+	 * counts are naturally "unique visitors".
+	 *
+	 * @param string $ip Visitor IP.
+	 * @return void
+	 */
+	public static function log_view( $ip ) {
+		global $wpdb;
+		$ip = substr( (string) $ip, 0, 64 );
+		if ( '' === $ip ) {
+			return;
+		}
+		$table = PMG_Activator::views_table();
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->prepare(
+				"INSERT IGNORE INTO {$table} (ip, day, created_at) VALUES (%s, %s, %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$ip,
+				current_time( 'Y-m-d' ),
+				self::now()
+			)
+		);
+	}
+
+	/**
+	 * Total unique visitors across all time (distinct IPs).
+	 *
+	 * @return int
+	 */
+	public static function total_unique_views() {
+		global $wpdb;
+		$table = PMG_Activator::views_table();
+		return (int) $wpdb->get_var( "SELECT COUNT(DISTINCT ip) FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
+	 * Unique visitors per day (most recent first).
+	 *
+	 * @param int $limit Number of days to return.
+	 * @return array<int,array{day:string,visitors:int}>
+	 */
+	public static function daily_views( $limit = 30 ) {
+		global $wpdb;
+		$table = PMG_Activator::views_table();
+		$limit = max( 1, (int) $limit );
+		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT day, COUNT(*) AS visitors FROM {$table} GROUP BY day ORDER BY day DESC LIMIT %d", $limit ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Unique-IP counts for each funnel stage.
 	 *
 	 * @return array{cta:int,generate:int,size:int,purchase:int}

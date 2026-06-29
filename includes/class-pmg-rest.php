@@ -114,7 +114,10 @@ class PMG_Rest {
 		$ip      = $this->client_ip();
 		$stage   = sanitize_key( (string) $request->get_param( 'stage' ) );
 
-		if ( 'size' === $stage ) {
+		if ( 'view' === $stage ) {
+			// Unique daily page view (one row per IP per day).
+			PMG_Leads::log_view( $ip );
+		} elseif ( 'size' === $stage ) {
 			// Funnel: visitor chose a size.
 			PMG_Leads::log_event( $ip, 'size', $session );
 		} else {

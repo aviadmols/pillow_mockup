@@ -221,7 +221,40 @@ class PMG_Admin {
 				<div class="pmg-card"><span class="pmg-card-label"><?php esc_html_e( 'Requests this month', 'pillow-mockup-generator' ); ?></span><span class="pmg-card-value"><?php echo esc_html( number_format_i18n( $stats['month_requests'] ) ); ?></span></div>
 				<div class="pmg-card"><span class="pmg-card-label"><?php esc_html_e( 'Cost this month', 'pillow-mockup-generator' ); ?></span><span class="pmg-card-value"><?php echo esc_html( $cost( $stats['month_cost'] ) ); ?></span></div>
 				<div class="pmg-card"><span class="pmg-card-label"><?php esc_html_e( 'Modal opens (button clicks)', 'pillow-mockup-generator' ); ?></span><span class="pmg-card-value"><?php echo esc_html( number_format_i18n( PMG_Leads::open_count() ) ); ?></span></div>
+				<div class="pmg-card"><span class="pmg-card-label"><?php esc_html_e( 'Unique visitors (all time)', 'pillow-mockup-generator' ); ?></span><span class="pmg-card-value"><?php echo esc_html( number_format_i18n( PMG_Leads::total_unique_views() ) ); ?></span></div>
 			</div>
+
+			<h2><?php esc_html_e( 'Unique visitors by day', 'pillow-mockup-generator' ); ?></h2>
+			<?php $pmg_days = PMG_Leads::daily_views( 30 ); ?>
+			<?php if ( empty( $pmg_days ) ) : ?>
+				<p class="pmg-hint"><?php esc_html_e( 'No visits recorded yet.', 'pillow-mockup-generator' ); ?></p>
+			<?php else : ?>
+				<?php
+				$pmg_day_max = 1;
+				foreach ( $pmg_days as $pmg_day_row ) {
+					$pmg_day_max = max( $pmg_day_max, (int) $pmg_day_row['visitors'] );
+				}
+				?>
+				<table class="widefat striped pmg-table pmg-visitors">
+					<thead><tr>
+						<th><?php esc_html_e( 'Day', 'pillow-mockup-generator' ); ?></th>
+						<th><?php esc_html_e( 'Unique visitors', 'pillow-mockup-generator' ); ?></th>
+					</tr></thead>
+					<tbody>
+					<?php foreach ( $pmg_days as $pmg_day_row ) : ?>
+						<?php $pmg_day_pct = round( ( (int) $pmg_day_row['visitors'] / $pmg_day_max ) * 100, 1 ); ?>
+						<tr>
+							<td><?php echo esc_html( mysql2date( get_option( 'date_format' ), $pmg_day_row['day'] ) ); ?></td>
+							<td>
+								<span class="pmg-funnel-bar" style="display:inline-block;height:10px;border-radius:5px;background:#2271b1;width:<?php echo esc_attr( max( 2, (float) $pmg_day_pct ) ); ?>%;min-width:6px;vertical-align:middle;"></span>
+								<strong><?php echo esc_html( number_format_i18n( (int) $pmg_day_row['visitors'] ) ); ?></strong>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+				<p class="pmg-hint"><?php esc_html_e( 'Visitors are counted once per day, identified by IP address (last 30 days).', 'pillow-mockup-generator' ); ?></p>
+			<?php endif; ?>
 
 			<h2><?php esc_html_e( 'Conversion funnel (unique visitors by IP)', 'pillow-mockup-generator' ); ?></h2>
 			<?php

@@ -356,6 +356,27 @@
 	}
 
 	/**
+	 * Record a unique daily page view, at most once per browser per day (a
+	 * localStorage guard keeps repeat loads from re-hitting the server). The
+	 * server still dedupes per IP per day so the counts stay accurate.
+	 */
+	function trackView() {
+		try {
+			var today = new Date();
+			var key = 'pmg_view_' + today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+			if (window.localStorage && localStorage.getItem(key)) {
+				return;
+			}
+			trackBeacon({ stage: 'view' });
+			if (window.localStorage) {
+				localStorage.setItem(key, '1');
+			}
+		} catch (e) {
+			trackBeacon({ stage: 'view' });
+		}
+	}
+
+	/**
 	 * Return the widget whose popup modal is currently open, if any.
 	 */
 	function pmgOpenWidget() {
@@ -1110,6 +1131,8 @@
 			var widget = new Widget(root);
 			widget.restore();
 		});
+		// Count this visitor once per day (non-blocking).
+		trackView();
 	}
 
 	// Run as soon as the DOM is available — even if DOMContentLoaded already

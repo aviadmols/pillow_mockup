@@ -33,6 +33,11 @@ class PMG_Activator {
 	const EVENTS_TABLE = 'pmg_events';
 
 	/**
+	 * Daily unique page-view table name (without prefix). One row per IP per day.
+	 */
+	const VIEWS_TABLE = 'pmg_views';
+
+	/**
 	 * Fully qualified leads table name.
 	 *
 	 * @return string
@@ -70,6 +75,16 @@ class PMG_Activator {
 	public static function events_table() {
 		global $wpdb;
 		return $wpdb->prefix . self::EVENTS_TABLE;
+	}
+
+	/**
+	 * Fully qualified daily unique page-view table name.
+	 *
+	 * @return string
+	 */
+	public static function views_table() {
+		global $wpdb;
+		return $wpdb->prefix . self::VIEWS_TABLE;
 	}
 
 	/**
@@ -112,6 +127,7 @@ class PMG_Activator {
 		$generations     = self::generations_table();
 		$opens           = self::opens_table();
 		$events          = self::events_table();
+		$views           = self::views_table();
 
 		$leads_sql = "CREATE TABLE {$leads} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -182,10 +198,21 @@ class PMG_Activator {
 			KEY stage (stage)
 		) {$charset_collate};";
 
+		$views_sql = "CREATE TABLE {$views} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			ip varchar(64) NOT NULL DEFAULT '',
+			day date NOT NULL,
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY ip_day (ip,day),
+			KEY day (day)
+		) {$charset_collate};";
+
 		dbDelta( $leads_sql );
 		dbDelta( $generations_sql );
 		dbDelta( $opens_sql );
 		dbDelta( $events_sql );
+		dbDelta( $views_sql );
 
 		update_option( 'pmg_db_version', PMG_VERSION );
 	}
