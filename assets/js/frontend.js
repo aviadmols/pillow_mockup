@@ -336,7 +336,68 @@
 	}
 
 	/**
-	 * Track an open-modal (CTA) click — counter + funnel "cta" stage.
+	 * Ensure the Meta Pixel base code is present: reuse an existing `fbq`
+	 * (theme / GTM) or inject it with the configured Pixel ID. Returns true when
+	 * `fbq` is usable. Standalone twin of Widget.prototype.ensureFbq so module
+	 * helpers (without a widget instance) can fire pixel events too.
+	 */
+	function pmgEnsureFbq() {
+		if (typeof window.fbq === 'function') {
+			return true;
+		}
+		var pixelId = CFG.fbPixelId ? String(CFG.fbPixelId).trim() : '';
+		if (!pixelId) {
+			return false;
+		}
+		/* eslint-disable */
+		!function (f, b, e, v, n, t, s) {
+			if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+			if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
+			t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
+		}(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+		/* eslint-enable */
+		try {
+			window.fbq('init', pixelId);
+			window.fbq('track', 'PageView');
+		} catch (e) {
+			return false;
+		}
+		return typeof window.fbq === 'function';
+	}
+
+	/**
+	 * Fire a funnel micro-conversion to Meta Pixel (as a custom event) and to
+	 * Google Analytics (gtag.js) plus the GTM dataLayer. Fire-and-forget and
+	 * fully defensive: each platform is an independent no-op when it isn't
+	 * present, so this never blocks or breaks the UI.
+	 *
+	 * @param {string} name   Event name (e.g. "UploadCTAClick").
+	 * @param {object} params Optional event parameters.
+	 */
+	function pmgFireEvent(name, params) {
+		params = params || {};
+		// Meta Pixel — custom event.
+		try {
+			if (pmgEnsureFbq()) {
+				window.fbq('trackCustom', name, params);
+			}
+		} catch (e) {}
+		// Google Analytics 4 (gtag.js).
+		try {
+			if (typeof window.gtag === 'function') {
+				window.gtag('event', name, params);
+			}
+		} catch (e) {}
+		// Google Tag Manager dataLayer (works when GA is wired through GTM).
+		try {
+			window.dataLayer = window.dataLayer || [];
+			window.dataLayer.push(Object.assign({ event: name }, params));
+		} catch (e) {}
+	}
+
+	/**
+	 * Track an open-modal (CTA) click — counter + funnel "cta" stage, plus the
+	 * Meta Pixel / GA "UploadCTAClick" micro-conversion.
 	 *
 	 * @param {object} widget Source widget (for the session token), may be null.
 	 */
@@ -347,6 +408,7 @@
 		}
 		pmgLastTrack = now;
 		trackBeacon({ session: widget && widget.state ? widget.state.session : '' });
+		pmgFireEvent('UploadCTAClick', { page_id: CFG.pageId || 0 });
 	}
 
 	/**
@@ -764,6 +826,8 @@
 			this.closeModal();
 			return;
 		}
+		// The visitor actually picked a valid image from their device.
+		pmgFireEvent('PhotoSelected', { page_id: CFG.pageId || 0 });
 		this.setState('loading');
 		this.busy(true);
 		fileToDataUrl(file, CFG.maxPx).then(function (dataUrl) {
@@ -810,6 +874,8 @@
 			if (self.state.selectedUrl) {
 				self.els.result.src = self.state.selectedUrl;
 			}
+			// A live pillow preview was successfully produced for the visitor.
+			pmgFireEvent('PreviewGenerated', { page_id: CFG.pageId || 0 });
 			self.showResult();
 			self.updateToolbar();
 		}).catch(function () {
@@ -1026,27 +1092,7 @@
 	 * with the configured Pixel ID. Returns true when `fbq` is available.
 	 */
 	Widget.prototype.ensureFbq = function () {
-		if (typeof window.fbq === 'function') {
-			return true;
-		}
-		var pixelId = CFG.fbPixelId ? String(CFG.fbPixelId).trim() : '';
-		if (!pixelId) {
-			return false;
-		}
-		/* eslint-disable */
-		!function (f, b, e, v, n, t, s) {
-			if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
-			if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = [];
-			t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s);
-		}(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
-		/* eslint-enable */
-		try {
-			window.fbq('init', pixelId);
-			window.fbq('track', 'PageView');
-		} catch (e) {
-			return false;
-		}
-		return typeof window.fbq === 'function';
+		return pmgEnsureFbq();
 	};
 
 	/**
