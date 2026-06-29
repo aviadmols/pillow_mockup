@@ -39,6 +39,29 @@
 			});
 		}
 
+		// ---- Demo pillow media picker ----
+		var demoPickBtn = document.querySelector('[data-lab-demo-pick]');
+		var demoRefInput = document.querySelector('[data-lab-demo-ref-url]');
+
+		if (demoPickBtn && demoRefInput && window.wp && window.wp.media) {
+			var demoFrame = null;
+			demoPickBtn.addEventListener('click', function (e) {
+				e.preventDefault();
+				if (demoFrame) { demoFrame.open(); return; }
+				demoFrame = window.wp.media({
+					title: 'Select demo image',
+					button: { text: 'Use this image' },
+					library: { type: 'image' },
+					multiple: false
+				});
+				demoFrame.on('select', function () {
+					var att = demoFrame.state().get('selection').first().toJSON();
+					if (att && att.url) { demoRefInput.value = att.url; }
+				});
+				demoFrame.open();
+			});
+		}
+
 		// ---- Live preview box ----
 		var box = document.querySelector('[data-lab-preview-box]');
 		if (!box) { return; }

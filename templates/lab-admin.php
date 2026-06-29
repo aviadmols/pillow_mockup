@@ -12,16 +12,23 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$pmg_room_url    = (string) $lab['room_url'];
-$pmg_ref_url     = (string) $lab['ref_url'];
-$pmg_preview_src = '' !== $pmg_room_url ? $pmg_room_url : $pmg_ref_url;
+$pmg_room_url     = (string) $lab['room_url'];
+$pmg_ref_url      = (string) $lab['ref_url'];
+$pmg_demo_url     = (string) $lab['demo_url'];
+$pmg_demo_ref_url = (string) $lab['demo_ref_url'];
+$pmg_preview_src  = '' !== $pmg_room_url ? $pmg_room_url : $pmg_ref_url;
 
 $pmg_notices = array(
-	'room_ok'  => array( 'updated', __( 'Room mockup generated.', 'pillow-mockup-generator' ) ),
-	'room_err' => array( 'error', __( 'Could not generate the room mockup. Check your API key and try again.', 'pillow-mockup-generator' ) ),
-	'room_set' => array( 'updated', __( 'Room image saved.', 'pillow-mockup-generator' ) ),
-	'no_ref'   => array( 'error', __( 'Please choose a reference image first.', 'pillow-mockup-generator' ) ),
-	'saved'    => array( 'updated', __( 'Settings saved.', 'pillow-mockup-generator' ) ),
+	'room_ok'      => array( 'updated', __( 'Room mockup generated.', 'pillow-mockup-generator' ) ),
+	'room_err'     => array( 'error', __( 'Could not generate the room mockup. Check your API key and try again.', 'pillow-mockup-generator' ) ),
+	'room_set'     => array( 'updated', __( 'Room image saved.', 'pillow-mockup-generator' ) ),
+	'no_ref'       => array( 'error', __( 'Please choose a reference image first.', 'pillow-mockup-generator' ) ),
+	'saved'        => array( 'updated', __( 'Settings saved.', 'pillow-mockup-generator' ) ),
+	'demo_ok'      => array( 'updated', __( 'Demo pillow generated.', 'pillow-mockup-generator' ) ),
+	'demo_err'     => array( 'error', __( 'Could not generate the demo pillow. Check your API key and try again.', 'pillow-mockup-generator' ) ),
+	'demo_set'     => array( 'updated', __( 'Demo pillow image saved.', 'pillow-mockup-generator' ) ),
+	'demo_cleared' => array( 'updated', __( 'Demo pillow removed.', 'pillow-mockup-generator' ) ),
+	'demo_no_ref'  => array( 'error', __( 'Please choose a demo reference image first.', 'pillow-mockup-generator' ) ),
 );
 ?>
 <div class="wrap pmg-wrap">
@@ -119,6 +126,43 @@ $pmg_notices = array(
 					</td>
 				</tr>
 			<?php endif; ?>
+		</table>
+
+		<h2><?php esc_html_e( '4. Demo pillow (shown before upload)', 'pillow-mockup-generator' ); ?></h2>
+		<p class="description"><?php esc_html_e( 'Optional. Show a sample pillow on the room with a big arrow and a call-to-action before the visitor uploads, so they immediately understand what the tool does.', 'pillow-mockup-generator' ); ?></p>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Demo reference image', 'pillow-mockup-generator' ); ?></th>
+				<td>
+					<input type="hidden" name="pmg_lab[demo_ref_url]" value="<?php echo esc_attr( $pmg_demo_ref_url ); ?>" data-lab-demo-ref-url />
+					<p>
+						<button type="button" class="button" data-lab-demo-pick><?php esc_html_e( 'Choose image', 'pillow-mockup-generator' ); ?></button>
+					</p>
+					<p class="description"><?php esc_html_e( 'Pick any sample photo. "Generate" turns it into a pillow with AI; "Use selected image" places it as-is (use a transparent PNG for a clean result).', 'pillow-mockup-generator' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="pmg-lab-demo-text"><?php esc_html_e( 'Call-to-action text', 'pillow-mockup-generator' ); ?></label></th>
+				<td>
+					<input type="text" id="pmg-lab-demo-text" name="pmg_lab[demo_text]" value="<?php echo esc_attr( (string) $lab['demo_text'] ); ?>" class="regular-text" />
+					<p class="description"><?php esc_html_e( 'Shown above the big arrow (e.g. "See how your pillow will look!").', 'pillow-mockup-generator' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Demo pillow', 'pillow-mockup-generator' ); ?></th>
+				<td>
+					<button type="submit" name="pmg_lab_demo_generate" value="1" class="button button-primary"><?php esc_html_e( 'Generate demo pillow with AI', 'pillow-mockup-generator' ); ?></button>
+					<button type="submit" name="pmg_lab_demo_use" value="1" class="button"><?php esc_html_e( 'Use selected image as demo', 'pillow-mockup-generator' ); ?></button>
+					<?php if ( '' !== $pmg_demo_url ) : ?>
+						<button type="submit" name="pmg_lab_demo_clear" value="1" class="button button-link-delete"><?php esc_html_e( 'Remove demo', 'pillow-mockup-generator' ); ?></button>
+					<?php endif; ?>
+					<?php if ( '' !== $pmg_demo_url ) : ?>
+						<p style="margin-top:12px;">
+							<img src="<?php echo esc_url( $pmg_demo_url ); ?>" alt="" style="max-width:160px;height:auto;border:1px solid #dcdcde;border-radius:8px;background:#f6f7f7;" />
+						</p>
+					<?php endif; ?>
+				</td>
+			</tr>
 		</table>
 
 		<?php if ( '' !== $pmg_preview_src ) : ?>

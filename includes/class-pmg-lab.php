@@ -94,6 +94,9 @@ class PMG_Lab {
 			'ref_url'     => '',
 			'room_prompt' => 'A photorealistic modern living room interior with a single empty sofa, soft natural daylight, warm neutral tones, and clear empty space in the middle of the sofa where a decorative cushion would sit. Do not place any pillow or cushion on the sofa. Clean, realistic, high-quality interior photography.',
 			'cutout_prompt' => self::default_cutout_prompt(),
+			'demo_url'    => '',
+			'demo_ref_url' => '',
+			'demo_text'   => 'See how your pillow will look!',
 			'pos_x'       => 50.0,
 			'pos_y'       => 72.0,
 			'base_width'  => 34.0,
@@ -176,7 +179,13 @@ class PMG_Lab {
 	 */
 	public function register_assets() {
 		wp_register_style( 'pmg-lab', PMG_PLUGIN_URL . 'assets/css/lab.css', array(), PMG_VERSION );
-		wp_register_script( 'pmg-lab', PMG_PLUGIN_URL . 'assets/js/lab.js', array(), PMG_VERSION, true );
+
+		// Reuse the same Lottie loader as the live widget. Register the library
+		// here too (guarded) so the Lab works on pages without the main shortcode.
+		if ( ! wp_script_is( 'pmg-lottie', 'registered' ) ) {
+			wp_register_script( 'pmg-lottie', 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js', array(), '5.12.2', true );
+		}
+		wp_register_script( 'pmg-lab', PMG_PLUGIN_URL . 'assets/js/lab.js', array( 'pmg-lottie' ), PMG_VERSION, true );
 	}
 
 	/**
@@ -191,7 +200,13 @@ class PMG_Lab {
 		$this->enqueued = true;
 
 		wp_enqueue_style( 'pmg-lab' );
+		wp_enqueue_script( 'pmg-lottie' );
 		wp_enqueue_script( 'pmg-lab' );
+
+		$lottie_url = (string) PMG_Settings::get( 'lottie_url', '' );
+		if ( '' === $lottie_url ) {
+			$lottie_url = PMG_PLUGIN_URL . 'assets/lottie/loader.json';
+		}
 
 		$cfg   = self::get();
 		$sizes = array();
@@ -216,6 +231,9 @@ class PMG_Lab {
 				'nonce'        => wp_create_nonce( 'wp_rest' ),
 				'nonceUrl'     => esc_url_raw( rest_url( PMG_REST_NAMESPACE . '/nonce' ) ),
 				'roomUrl'      => esc_url_raw( (string) $cfg['room_url'] ),
+				'lottieUrl'    => esc_url_raw( $lottie_url ),
+				'demoUrl'      => esc_url_raw( (string) $cfg['demo_url'] ),
+				'demoText'     => (string) $cfg['demo_text'],
 				'posX'         => (float) $cfg['pos_x'],
 				'posY'         => (float) $cfg['pos_y'],
 				'baseWidth'    => (float) $cfg['base_width'],
@@ -464,11 +482,14 @@ class PMG_Lab {
 			return;
 		}
 
-		$is_generate = isset( $_POST['pmg_lab_generate'] );
-		$is_use      = isset( $_POST['pmg_lab_use'] );
-		$is_save     = isset( $_POST['pmg_lab_save'] );
+		$is_generate    = isset( $_POST['pmg_lab_generate'] );
+		$is_use         = isset( $_POST['pmg_lab_use'] );
+		$is_save        = isset( $_POST['pmg_lab_save'] );
+		$is_demo_gen    = isset( $_POST['pmg_lab_demo_generate'] );
+		$is_demo_use    = isset( $_POST['pmg_lab_demo_use'] );
+		$is_demo_clear  = isset( $_POST['pmg_lab_demo_clear'] );
 
-		if ( ! $is_generate && ! $is_use && ! $is_save ) {
+		if ( ! $is_generate && ! $is_use && ! $is_save && ! $is_demo_gen && ! $is_demo_use && ! $is_demo_clear ) {
 			return;
 		}
 
@@ -482,6 +503,28 @@ class PMG_Lab {
 		// Reference image URL (from the WP media picker).
 		$ref_url = isset( $_POST['pmg_lab']['ref_url'] ) ? esc_url_raw( wp_unslash( $_POST['pmg_lab']['ref_url'] ) ) : '';
 		$patch['ref_url'] = $ref_url;
+
+		// Demo reference image URL (separate picker).
+		$demo_ref_url = isset( $_POST['pmg_lab']['demo_ref_url'] ) ? esc_url_raw( wp_unslash( $_POST['pmg_lab']['demo_ref_url'] ) ) : '';
+		$patch['demo_ref_url'] = $demo_ref_url;
+
+		if ( $is_demo_clear ) {
+			$patch['demo_url'] = '';
+			self::update( $patch );
+			$this->redirect_with( array( 'pmg_notice' => 'demo_cleared' ) );
+		}
+
+		if ( $is_demo_use ) {
+			$patch['demo_url'] = $demo_ref_url;
+			self::update( $patch );
+			$this->redirect_with( array( 'pmg_notice' => '' === $demo_ref_url ? 'demo_no_ref' : 'demo_set' ) );
+		}
+
+		if ( $is_demo_gen ) {
+			self::update( $patch );
+			$notice = $this->generate_demo( $demo_ref_url );
+			$this->redirect_with( array( 'pmg_notice' => $notice ) );
+		}
 
 		if ( $is_save ) {
 			self::update( $patch );
@@ -521,6 +564,7 @@ class PMG_Lab {
 			'base_width'  => $clamp( $raw['base_width'] ?? '', 2, 100, $defaults['base_width'] ),
 			'room_prompt' => isset( $raw['room_prompt'] ) ? sanitize_textarea_field( $raw['room_prompt'] ) : $defaults['room_prompt'],
 			'cutout_prompt' => isset( $raw['cutout_prompt'] ) ? sanitize_textarea_field( $raw['cutout_prompt'] ) : $defaults['cutout_prompt'],
+			'demo_text'   => isset( $raw['demo_text'] ) ? sanitize_text_field( $raw['demo_text'] ) : $defaults['demo_text'],
 		);
 
 		$scales = array();
@@ -563,6 +607,32 @@ class PMG_Lab {
 
 		self::update( array( 'room_url' => $saved['url'] ) );
 		return 'room_ok';
+	}
+
+	/**
+	 * Generate the sample (demo) pillow from a reference photo via the AI, using
+	 * the same green-screen cut-out prompt as the live flow. The front end keys
+	 * out the green at display time, so the demo composites exactly like a real
+	 * upload.
+	 *
+	 * @param string $ref_url Public reference image URL.
+	 * @return string Notice key.
+	 */
+	protected function generate_demo( $ref_url ) {
+		if ( '' === $ref_url ) {
+			return 'demo_no_ref';
+		}
+
+		$cfg    = self::get();
+		$prompt = isset( $cfg['cutout_prompt'] ) ? (string) $cfg['cutout_prompt'] : '';
+
+		$result = PMG_Generator::generate_overlay( 'lab', $ref_url, $prompt, 0 );
+		if ( is_wp_error( $result ) ) {
+			return 'demo_err';
+		}
+
+		self::update( array( 'demo_url' => $result['url'] ) );
+		return 'demo_ok';
 	}
 
 	/**

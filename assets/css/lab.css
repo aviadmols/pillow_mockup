@@ -54,6 +54,47 @@
 	transition: width 0.25s ease;
 }
 
+/* Demo call-to-action (big arrow + text shown before upload) */
+.pmg-lab__cta {
+	position: absolute;
+	top: 5%;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 3;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	text-align: center;
+	pointer-events: none;
+	width: max-content;
+	max-width: 90%;
+}
+
+.pmg-lab__cta-text {
+	font-size: clamp(18px, 3.4vw, 30px);
+	font-weight: 800;
+	line-height: 1.15;
+	color: #1a1a1a;
+	background: rgba(255, 255, 255, 0.88);
+	padding: 8px 18px;
+	border-radius: 100px;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);
+}
+
+.pmg-lab__cta-arrow {
+	width: clamp(40px, 7vw, 68px);
+	height: auto;
+	color: #e11d48;
+	filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.22));
+	animation: pmg-lab-bounce 1.2s ease-in-out infinite;
+}
+
+@keyframes pmg-lab-bounce {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(9px); }
+}
+
 /* Loading overlay */
 .pmg-lab__loading {
 	position: absolute;
@@ -68,13 +109,28 @@
 	line-height: 1.4;
 }
 
+.pmg-lab__lottie {
+	width: 160px;
+	height: 160px;
+}
+
+/* The spinner is only a fallback when the Lottie library/animation is missing */
 .pmg-lab__spinner {
+	display: none;
 	width: 36px;
 	height: 36px;
 	border: 3px solid #cbd5e1;
 	border-top-color: #1a1a1a;
 	border-radius: 50%;
 	animation: pmg-lab-spin 0.8s linear infinite;
+}
+
+.pmg-lab.is-no-lottie .pmg-lab__lottie {
+	display: none;
+}
+
+.pmg-lab.is-no-lottie .pmg-lab__spinner {
+	display: block;
 }
 
 .pmg-lab__loading-text {

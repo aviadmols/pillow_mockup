@@ -269,19 +269,31 @@
 		this.root = root;
 		this.session = '';
 		this.scale = 1;
+		this.lottie = null;
 		this.els = {
 			file: root.querySelector('[data-lab-file]'),
 			stage: root.querySelector('[data-lab-stage]'),
 			overlay: root.querySelector('[data-lab-overlay]'),
 			loading: root.querySelector('[data-lab-loading]'),
+			lottie: root.querySelector('[data-lab-lottie]'),
 			upload: root.querySelector('[data-lab-upload]'),
 			sizes: root.querySelector('[data-lab-sizes]'),
+			cta: root.querySelector('[data-lab-cta]'),
 			notice: root.querySelector('[data-lab-notice]')
 		};
 		// Default scale = the selected (medium) size, else first.
 		this.scale = this.scaleForSelected();
 		this.bind();
+		this.showDemo();
 	}
+
+	// Before any upload, show the configured sample pillow + the call-to-action
+	// (big arrow + text). Both disappear as soon as a real upload starts.
+	LabWidget.prototype.showDemo = function () {
+		if (!CFG.demoUrl) { return; }
+		if (this.els.cta) { this.els.cta.hidden = false; }
+		this.showOverlay(CFG.demoUrl, true);
+	};
 
 	LabWidget.prototype.scaleForSelected = function () {
 		var selected = this.root.querySelector('[data-lab-size].is-selected');
@@ -339,6 +351,41 @@
 	LabWidget.prototype.busy = function (on) {
 		if (this.els.loading) { this.els.loading.hidden = !on; }
 		this.root.classList.toggle('is-busy', !!on);
+		if (on) { this.startLottie(); } else { this.stopLottie(); }
+	};
+
+	// Same Lottie loader as the live widget; falls back to the CSS spinner
+	// (.is-no-lottie) if the library or animation file is unavailable.
+	LabWidget.prototype.startLottie = function () {
+		var self = this;
+		if (!this.els.lottie || this.lottie) { return; }
+		this.els.lottie.innerHTML = '';
+		if (typeof window.lottie === 'undefined' || !CFG.lottieUrl) {
+			this.root.classList.add('is-no-lottie');
+			return;
+		}
+		try {
+			this.lottie = window.lottie.loadAnimation({
+				container: this.els.lottie,
+				renderer: 'svg',
+				loop: true,
+				autoplay: true,
+				path: CFG.lottieUrl
+			});
+			this.lottie.addEventListener('data_failed', function () {
+				self.root.classList.add('is-no-lottie');
+			});
+		} catch (e) {
+			this.root.classList.add('is-no-lottie');
+		}
+	};
+
+	LabWidget.prototype.stopLottie = function () {
+		if (this.lottie) {
+			try { this.lottie.destroy(); } catch (e) {}
+			this.lottie = null;
+		}
+		if (this.els.lottie) { this.els.lottie.innerHTML = ''; }
 	};
 
 	LabWidget.prototype.handleFile = function (file) {
@@ -348,6 +395,7 @@
 			return;
 		}
 		this.notice('');
+		if (this.els.cta) { this.els.cta.hidden = true; }
 		this.busy(true);
 
 		fileToDataUrl(file, CFG.maxPx).then(function (dataUrl) {
@@ -367,13 +415,18 @@
 		});
 	};
 
-	LabWidget.prototype.showOverlay = function (url) {
+	LabWidget.prototype.showOverlay = function (url, isDemo) {
 		var self = this;
 		if (!this.els.overlay) { return; }
 		chromaKeyToDataUrl(url).then(function (finalUrl) {
 			self.els.overlay.src = finalUrl;
 			self.els.overlay.hidden = false;
-			if (self.els.sizes) { self.els.sizes.hidden = false; }
+			// Demo state keeps the size buttons hidden and the call-to-action up;
+			// a real upload reveals the sizes and removes the call-to-action.
+			if (!isDemo) {
+				if (self.els.sizes) { self.els.sizes.hidden = false; }
+				if (self.els.cta) { self.els.cta.hidden = true; }
+			}
 			self.applyLayout();
 		});
 	};
