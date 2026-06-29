@@ -95,7 +95,7 @@ class PMG_Lab {
 			'room_prompt' => 'A photorealistic modern living room interior with a single empty sofa, soft natural daylight, warm neutral tones, and clear empty space in the middle of the sofa where a decorative cushion would sit. Do not place any pillow or cushion on the sofa. Clean, realistic, high-quality interior photography.',
 			'cutout_prompt' => self::default_cutout_prompt(),
 			'pos_x'       => 50.0,
-			'pos_y'       => 56.0,
+			'pos_y'       => 72.0,
 			'base_width'  => 34.0,
 			'scales'      => array(
 				'small'  => 0.8,

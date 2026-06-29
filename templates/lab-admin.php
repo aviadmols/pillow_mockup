@@ -126,7 +126,7 @@ $pmg_notices = array(
 			<p class="description"><?php esc_html_e( 'The box shows the base placement and size of the pillow on the room.', 'pillow-mockup-generator' ); ?></p>
 			<div class="pmg-lab-admin-preview" data-lab-preview style="position:relative;max-width:520px;border:1px solid #dcdcde;border-radius:8px;overflow:hidden;line-height:0;">
 				<img src="<?php echo esc_url( $pmg_preview_src ); ?>" alt="" style="display:block;width:100%;height:auto;" data-lab-preview-img />
-				<div data-lab-preview-box style="position:absolute;left:<?php echo esc_attr( (string) $lab['pos_x'] ); ?>%;top:<?php echo esc_attr( (string) $lab['pos_y'] ); ?>%;width:<?php echo esc_attr( (string) $lab['base_width'] ); ?>%;aspect-ratio:1/1;transform:translate(-50%,-50%);border:2px dashed #2271b1;background:rgba(34,113,177,0.18);border-radius:6px;"></div>
+				<div data-lab-preview-box style="position:absolute;left:<?php echo esc_attr( (string) $lab['pos_x'] ); ?>%;top:<?php echo esc_attr( (string) $lab['pos_y'] ); ?>%;width:<?php echo esc_attr( (string) $lab['base_width'] ); ?>%;aspect-ratio:1/1;transform:translate(-50%,-100%);border:2px dashed #2271b1;background:rgba(34,113,177,0.18);border-radius:6px;"></div>
 			</div>
 		<?php endif; ?>
 

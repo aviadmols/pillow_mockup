@@ -215,12 +215,13 @@
 	}
 
 	// A pixel belongs to the green screen when the green channel clearly
-	// dominates both red and blue. Tuned loose enough to catch lighting
-	// variation on the screen, tight enough to keep yellows/skin/whites.
+	// dominates both red and blue. A *ratio* test (not a fixed RGB match) keeps
+	// it robust to lighting variation and anti-aliased edges, while staying
+	// tight enough to preserve yellows, skin tones and whites on the pillow.
 	function isGreenScreen(data, p) {
 		if (data[p + 3] === 0) { return true; }
 		var r = data[p], g = data[p + 1], b = data[p + 2];
-		return g > 80 && (g - r) > 40 && (g - b) > 40;
+		return g > 100 && g > r * 1.3 && g > b * 1.3;
 	}
 
 	function removeGreenBackground(data, w, h) {
