@@ -347,7 +347,10 @@ class PMG_Rest {
 		$work        = $this->get_work( $session );
 		$max_attempts = (int) PMG_Settings::get( 'max_attempts', 5 );
 
-		$lead_id = PMG_Leads::upsert(
+		// Always create a fresh record for every submission, so repeat
+		// registrations (even with the same email / phone / IP / session) are
+		// each saved as their own row. finalize() updates the latest row.
+		$lead_id = PMG_Leads::insert_lead(
 			$session,
 			array(
 				'name'           => $name,

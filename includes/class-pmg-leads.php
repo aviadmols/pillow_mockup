@@ -91,6 +91,35 @@ class PMG_Leads {
 	}
 
 	/**
+	 * Always create a NEW lead row (never update an existing one), so every
+	 * registration is recorded separately — even repeat submissions from the
+	 * same session, email, phone or IP. finalize() then updates the most recent
+	 * row for the session.
+	 *
+	 * @param string $session Session token.
+	 * @param array  $data    Column => value pairs.
+	 * @return int New lead id.
+	 */
+	public static function insert_lead( $session, array $data ) {
+		global $wpdb;
+		$table = PMG_Activator::leads_table();
+
+		$allowed = array( 'name', 'phone', 'email', 'address', 'apartment', 'city', 'state', 'zip', 'status', 'attempts', 'original_image', 'mockup_image', 'cutout_image', 'total_cost', 'size', 'price', 'ip' );
+		$payload = array();
+		foreach ( $allowed as $col ) {
+			if ( array_key_exists( $col, $data ) ) {
+				$payload[ $col ] = $data[ $col ];
+			}
+		}
+
+		$payload['session']    = $session;
+		$payload['created_at'] = self::now();
+		$payload['updated_at'] = self::now();
+		$wpdb->insert( $table, $payload ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
 	 * Delete a lead and its files + generation logs.
 	 *
 	 * @param int $id Lead id.
