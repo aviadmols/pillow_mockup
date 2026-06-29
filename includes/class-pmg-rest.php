@@ -47,6 +47,22 @@ class PMG_Rest {
 		register_rest_route( PMG_REST_NAMESPACE, '/lead', array_merge( $args, array( 'callback' => array( $this, 'lead' ) ) ) );
 		register_rest_route( PMG_REST_NAMESPACE, '/finalize', array_merge( $args, array( 'callback' => array( $this, 'finalize' ) ) ) );
 
+		// Experimental room-overlay (lab) endpoint. Registered here, in the proven
+		// REST controller, so it goes live exactly like the working routes above.
+		// The callback/permission live on the isolated PMG_Lab instance.
+		$lab = PMG_Plugin::instance()->lab;
+		if ( $lab instanceof PMG_Lab ) {
+			register_rest_route(
+				PMG_REST_NAMESPACE,
+				'/room-overlay',
+				array(
+					'methods'             => 'POST',
+					'permission_callback' => array( $lab, 'check_nonce' ),
+					'callback'            => array( $lab, 'lab_cutout' ),
+				)
+			);
+		}
+
 		// Public, never-cached endpoint that hands out a fresh REST nonce.
 		register_rest_route(
 			PMG_REST_NAMESPACE,

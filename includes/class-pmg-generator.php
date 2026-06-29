@@ -44,6 +44,30 @@ class PMG_Generator {
 	}
 
 	/**
+	 * Generate an isolated, transparent pillow overlay for the experimental Lab.
+	 *
+	 * Uses a caller-supplied prompt (the Lab's own, editable prompt) so it never
+	 * shares the live print die-cut prompt. Output type is logged as 'overlay'.
+	 *
+	 * @param string $session    Session token.
+	 * @param string $source_url Reference image (data URL or public URL).
+	 * @param string $prompt     Prompt to use (falls back to the live cutout prompt if empty).
+	 * @param int    $lead_id    Optional lead id for logging.
+	 * @return array|WP_Error { url, path, cost }
+	 */
+	public static function generate_overlay( $session, $source_url, $prompt, $lead_id = 0 ) {
+		$model = (string) PMG_Settings::get( 'cutout_model', '' );
+		if ( '' === $model ) {
+			$model = (string) PMG_Settings::get( 'model', 'google/gemini-2.5-flash-image' );
+		}
+		$prompt = trim( (string) $prompt );
+		if ( '' === $prompt ) {
+			$prompt = (string) PMG_Settings::get( 'cutout_prompt', PMG_Settings::default_cutout_prompt() );
+		}
+		return self::run( $session, $source_url, $model, $prompt, 'overlay', $lead_id );
+	}
+
+	/**
 	 * Shared generation runner: call API, persist file, log generation row.
 	 *
 	 * @param string $session    Session token.

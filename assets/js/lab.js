@@ -189,7 +189,7 @@
 		this.busy(true);
 
 		fileToDataUrl(file, CFG.maxPx).then(function (dataUrl) {
-			return api('lab-cutout', { image: dataUrl, session: self.session });
+			return api('room-overlay', { image: dataUrl, session: self.session });
 		}).then(function (res) {
 			self.busy(false);
 			var d = res.data || {};

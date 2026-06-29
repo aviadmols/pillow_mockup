@@ -62,7 +62,9 @@ class PMG_Lab {
 	public function register() {
 		add_shortcode( self::SHORTCODE, array( $this, 'render' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'register_assets' ) );
-		add_action( 'rest_api_init', array( $this, 'routes' ) );
+
+		// The REST route is registered by PMG_Rest (the proven controller) so it
+		// goes live exactly like the working endpoints; see PMG_Rest::routes().
 
 		if ( is_admin() ) {
 			add_action( 'admin_menu', array( $this, 'menu' ), 20 );
@@ -85,6 +87,7 @@ class PMG_Lab {
 			'room_url'    => '',
 			'ref_url'     => '',
 			'room_prompt' => 'A photorealistic modern living room interior with a single empty sofa, soft natural daylight, warm neutral tones, and clear empty space in the middle of the sofa where a decorative cushion would sit. Do not place any pillow or cushion on the sofa. Clean, realistic, high-quality interior photography.',
+			'cutout_prompt' => 'From the reference photo, create a single realistic decorative throw pillow with the photo\'s main subject printed across its front fabric. Show the pillow straight-on, plump and three-dimensional with soft, natural fabric folds. Output ONLY the pillow, perfectly isolated on a fully transparent background (PNG with alpha). No room, no sofa, no surface, no background, and no drop shadow. Keep crisp, clean edges around the pillow so it can be composited cleanly onto another image.',
 			'pos_x'       => 50.0,
 			'pos_y'       => 56.0,
 			'base_width'  => 34.0,
@@ -211,23 +214,6 @@ class PMG_Lab {
 	/* --------------------------------------------------------------------- */
 
 	/**
-	 * Register the lab REST route (additive; does not touch existing routes).
-	 *
-	 * @return void
-	 */
-	public function routes() {
-		register_rest_route(
-			PMG_REST_NAMESPACE,
-			'/lab-cutout',
-			array(
-				'methods'             => 'POST',
-				'permission_callback' => array( $this, 'check_nonce' ),
-				'callback'            => array( $this, 'lab_cutout' ),
-			)
-		);
-	}
-
-	/**
 	 * Verify the standard WordPress REST nonce.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -259,7 +245,9 @@ class PMG_Lab {
 
 		$session = $this->lab_session( $request->get_param( 'session' ) );
 
-		$cutout = PMG_Generator::generate_cutout( $session, $image, 0 );
+		$cfg    = self::get();
+		$prompt = isset( $cfg['cutout_prompt'] ) ? (string) $cfg['cutout_prompt'] : '';
+		$cutout = PMG_Generator::generate_overlay( $session, $image, $prompt, 0 );
 		if ( is_wp_error( $cutout ) ) {
 			$data   = $cutout->get_error_data();
 			$status = ( is_array( $data ) && ! empty( $data['status'] ) ) ? (int) $data['status'] : 500;
@@ -398,6 +386,7 @@ class PMG_Lab {
 			'pos_y'       => $clamp( $raw['pos_y'] ?? '', 0, 100, $defaults['pos_y'] ),
 			'base_width'  => $clamp( $raw['base_width'] ?? '', 2, 100, $defaults['base_width'] ),
 			'room_prompt' => isset( $raw['room_prompt'] ) ? sanitize_textarea_field( $raw['room_prompt'] ) : $defaults['room_prompt'],
+			'cutout_prompt' => isset( $raw['cutout_prompt'] ) ? sanitize_textarea_field( $raw['cutout_prompt'] ) : $defaults['cutout_prompt'],
 		);
 
 		$scales = array();

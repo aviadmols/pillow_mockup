@@ -79,7 +79,18 @@ $pmg_notices = array(
 			</tr>
 		</table>
 
-		<h2><?php esc_html_e( '2. Pillow placement & size', 'pillow-mockup-generator' ); ?></h2>
+		<h2><?php esc_html_e( '2. Pillow cut-out prompt', 'pillow-mockup-generator' ); ?></h2>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><label for="pmg-lab-cutout-prompt"><?php esc_html_e( 'Pillow prompt', 'pillow-mockup-generator' ); ?></label></th>
+				<td>
+					<textarea id="pmg-lab-cutout-prompt" name="pmg_lab[cutout_prompt]" rows="5" class="large-text"><?php echo esc_textarea( (string) $lab['cutout_prompt'] ); ?></textarea>
+					<p class="description"><?php esc_html_e( 'Sent with each uploaded photo. Ask the AI for a finished pillow isolated on a fully transparent background (PNG with alpha), with no room, surface or shadow, so it overlays cleanly on the room mockup.', 'pillow-mockup-generator' ); ?></p>
+				</td>
+			</tr>
+		</table>
+
+		<h2><?php esc_html_e( '3. Pillow placement & size', 'pillow-mockup-generator' ); ?></h2>
 		<table class="form-table" role="presentation">
 			<tr>
 				<th scope="row"><label for="pmg-lab-pos-x"><?php esc_html_e( 'Horizontal position (%)', 'pillow-mockup-generator' ); ?></label></th>
