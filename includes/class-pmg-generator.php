@@ -67,17 +67,15 @@ class PMG_Generator {
 			$prompt = (string) PMG_Settings::get( 'cutout_prompt', PMG_Settings::default_cutout_prompt() );
 		}
 
-		// Strip the (chroma) background server-side so the saved overlay is a
-		// transparent PNG cut-out that composites onto the room mockup.
-		$transform = array( 'PMG_ImageTools', 'cutout_data_url' );
-
-		$result = self::run( $session, $source_url, $model, $prompt, 'overlay', $lead_id, $transform );
+		// Background removal happens client-side (browser canvas chroma-key) so we
+		// keep the raw green-screen render here — no server image library needed.
+		$result = self::run( $session, $source_url, $model, $prompt, 'overlay', $lead_id );
 
 		// The strict "pro" image models frequently block benign requests with a
 		// safety content_filter and return no image. Auto-retry once on the more
 		// permissive flash model so the Lab keeps working without manual config.
 		if ( is_wp_error( $result ) && 'pmg_no_image' === $result->get_error_code() && $model !== $fallback ) {
-			$retry = self::run( $session, $source_url, $fallback, $prompt, 'overlay', $lead_id, $transform );
+			$retry = self::run( $session, $source_url, $fallback, $prompt, 'overlay', $lead_id );
 			if ( ! is_wp_error( $retry ) ) {
 				return $retry;
 			}

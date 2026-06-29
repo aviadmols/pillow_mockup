@@ -113,7 +113,7 @@ class PMG_Lab {
 	 * @return string
 	 */
 	public static function default_cutout_prompt() {
-		return 'From the reference photo, create a single realistic decorative throw pillow (square cushion) with the photo\'s main subject printed across the entire front fabric. Make the pillow plump and three-dimensional with soft, natural fabric folds and softly rounded corners. Center the pillow with clearly visible empty margin on all four sides and do not let it touch the edges of the image. Place it on a perfectly flat, uniform, solid chroma-key green background (pure RGB 0,255,0). The green must be one single flat colour filling the entire background, with no gradient, no texture, no pattern, no shadow and no reflection. Do not add any shadow under or around the pillow.';
+		return 'From the reference photo, create a single realistic decorative throw pillow (square cushion) with the photo\'s main subject printed across the entire front fabric. Make the pillow plump and three-dimensional with soft, natural fabric folds and softly rounded corners. Center the pillow with a clearly visible empty margin on all four sides so it never touches the edges of the image. CRITICAL: every pixel that is not the pillow must be one single, completely flat, uniform, pure chroma-key green (RGB 0,255,0), filling the entire background all the way to the edges of the image. The background must be 100% solid green — never white, never grey, never transparent, no gradient, no texture, no pattern. Do not paint any green on the pillow itself, and do not add any shadow, reflection, sofa, room or surface. Output only the pillow on a solid pure-green background.';
 	}
 
 	/**
@@ -125,6 +125,7 @@ class PMG_Lab {
 	protected static function legacy_cutout_prompts() {
 		return array(
 			'From the reference photo, create a single realistic decorative throw pillow with the photo\'s main subject printed across its front fabric. Show the pillow straight-on, plump and three-dimensional with soft, natural fabric folds. Output ONLY the pillow, perfectly isolated on a fully transparent background (PNG with alpha). No room, no sofa, no surface, no background, and no drop shadow. Keep crisp, clean edges around the pillow so it can be composited cleanly onto another image.',
+			'From the reference photo, create a single realistic decorative throw pillow (square cushion) with the photo\'s main subject printed across the entire front fabric. Make the pillow plump and three-dimensional with soft, natural fabric folds and softly rounded corners. Center the pillow with clearly visible empty margin on all four sides and do not let it touch the edges of the image. Place it on a perfectly flat, uniform, solid chroma-key green background (pure RGB 0,255,0). The green must be one single flat colour filling the entire background, with no gradient, no texture, no pattern, no shadow and no reflection. Do not add any shadow under or around the pillow.',
 		);
 	}
 

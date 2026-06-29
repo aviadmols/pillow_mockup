@@ -164,11 +164,14 @@
 	/* ----------------------------------------------------------------- */
 
 	/**
-	 * Remove the solid (chroma) background of the generated pillow entirely in
-	 * the browser, so it sits transparently on the room. The AI paints the
-	 * pillow on a solid colour; we flood-fill inward from the four borders and
-	 * turn every connected background-coloured pixel transparent. No server
-	 * library and no external service required.
+	 * Remove the chroma-GREEN background of the generated pillow entirely in the
+	 * browser, so the pillow sits transparently on the room. The AI paints the
+	 * pillow on a solid green screen; we flood-fill inward from the four borders
+	 * through connected GREEN pixels only and turn them transparent. Because we
+	 * key on green specifically (not "whatever colour the corner is"), a white or
+	 * colourful pillow is never removed. A final despill pass neutralises the
+	 * thin green fringe left along anti-aliased edges. No server library and no
+	 * external service required.
 	 *
 	 * Always resolves: on any failure (CORS-tainted canvas, decode error, an
 	 * image that is already transparent) it returns the original URL untouched.
@@ -191,7 +194,8 @@
 					catch (e) { resolve(url); return; } // tainted canvas
 					var data = imgData.data;
 					if (cornerAlpha(data, w, h) < 200) { resolve(url); return; } // already cut out
-					removeBorderBackground(data, w, h);
+					removeGreenBackground(data, w, h);
+					despillGreen(data);
 					ctx.putImageData(imgData, 0, 0);
 					resolve(canvas.toDataURL('image/png'));
 				} catch (e) {
@@ -210,36 +214,23 @@
 		return sum / idx.length;
 	}
 
-	function cornerColor(data, w, h) {
-		var idx = [0, (w - 1) * 4, (h - 1) * w * 4, ((h - 1) * w + (w - 1)) * 4];
-		var r = 0, g = 0, b = 0;
-		for (var i = 0; i < idx.length; i++) {
-			r += data[idx[i]];
-			g += data[idx[i] + 1];
-			b += data[idx[i] + 2];
-		}
-		return [r / idx.length, g / idx.length, b / idx.length];
+	// A pixel belongs to the green screen when the green channel clearly
+	// dominates both red and blue. Tuned loose enough to catch lighting
+	// variation on the screen, tight enough to keep yellows/skin/whites.
+	function isGreenScreen(data, p) {
+		if (data[p + 3] === 0) { return true; }
+		var r = data[p], g = data[p + 1], b = data[p + 2];
+		return g > 80 && (g - r) > 40 && (g - b) > 40;
 	}
 
-	function removeBorderBackground(data, w, h) {
-		var bg = cornerColor(data, w, h);
-		var thresh = 7000; // squared RGB distance tolerance
+	function removeGreenBackground(data, w, h) {
 		var total = w * h;
 		var visited = new Uint8Array(total);
 		var stack = [];
 
-		function matches(i) {
-			var p = i * 4;
-			if (data[p + 3] === 0) { return true; }
-			var dr = data[p] - bg[0];
-			var dg = data[p + 1] - bg[1];
-			var db = data[p + 2] - bg[2];
-			return (dr * dr + dg * dg + db * db) <= thresh;
-		}
-
 		function seed(i) {
 			if (visited[i]) { return; }
-			if (matches(i)) { visited[i] = 1; stack.push(i); }
+			if (isGreenScreen(data, i * 4)) { visited[i] = 1; stack.push(i); }
 		}
 
 		var x, y;
@@ -251,10 +242,21 @@
 			data[i * 4 + 3] = 0;
 			x = i % w;
 			y = (i - x) / w;
-			if (x > 0) { var l = i - 1; if (!visited[l] && matches(l)) { visited[l] = 1; stack.push(l); } }
-			if (x < w - 1) { var rr = i + 1; if (!visited[rr] && matches(rr)) { visited[rr] = 1; stack.push(rr); } }
-			if (y > 0) { var u = i - w; if (!visited[u] && matches(u)) { visited[u] = 1; stack.push(u); } }
-			if (y < h - 1) { var dn = i + w; if (!visited[dn] && matches(dn)) { visited[dn] = 1; stack.push(dn); } }
+			if (x > 0) { var l = i - 1; if (!visited[l] && isGreenScreen(data, l * 4)) { visited[l] = 1; stack.push(l); } }
+			if (x < w - 1) { var rr = i + 1; if (!visited[rr] && isGreenScreen(data, rr * 4)) { visited[rr] = 1; stack.push(rr); } }
+			if (y > 0) { var u = i - w; if (!visited[u] && isGreenScreen(data, u * 4)) { visited[u] = 1; stack.push(u); } }
+			if (y < h - 1) { var dn = i + w; if (!visited[dn] && isGreenScreen(data, dn * 4)) { visited[dn] = 1; stack.push(dn); } }
+		}
+	}
+
+	// Neutralise the green fringe on kept pixels: where green spills above the
+	// red/blue level, clamp it down to their max so edges don't glow green.
+	function despillGreen(data) {
+		for (var p = 0; p < data.length; p += 4) {
+			if (data[p + 3] === 0) { continue; }
+			var r = data[p], g = data[p + 1], b = data[p + 2];
+			var cap = Math.max(r, b);
+			if (g > cap + 12) { data[p + 1] = cap + 12; }
 		}
 	}
 
@@ -389,7 +391,9 @@
 		o.style.top = (parseFloat(CFG.posY) || 50) + '%';
 		o.style.width = width + '%';
 		o.style.height = 'auto';
-		o.style.transform = 'translate(-50%, -50%)';
+		// Anchor the bottom-centre (the pillow's base) at (posX, posY) so resizing
+		// grows/shrinks the pillow upward while its base stays pinned in place.
+		o.style.transform = 'translate(-50%, -100%)';
 	};
 
 	/* ----------------------------------------------------------------- */
