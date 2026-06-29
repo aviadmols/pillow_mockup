@@ -56,15 +56,30 @@ class PMG_Generator {
 	 * @return array|WP_Error { url, path, cost }
 	 */
 	public static function generate_overlay( $session, $source_url, $prompt, $lead_id = 0 ) {
+		$fallback = 'google/gemini-2.5-flash-image';
+
 		$model = (string) PMG_Settings::get( 'cutout_model', '' );
 		if ( '' === $model ) {
-			$model = (string) PMG_Settings::get( 'model', 'google/gemini-2.5-flash-image' );
+			$model = (string) PMG_Settings::get( 'model', $fallback );
 		}
 		$prompt = trim( (string) $prompt );
 		if ( '' === $prompt ) {
 			$prompt = (string) PMG_Settings::get( 'cutout_prompt', PMG_Settings::default_cutout_prompt() );
 		}
-		return self::run( $session, $source_url, $model, $prompt, 'overlay', $lead_id );
+
+		$result = self::run( $session, $source_url, $model, $prompt, 'overlay', $lead_id );
+
+		// The strict "pro" image models frequently block benign requests with a
+		// safety content_filter and return no image. Auto-retry once on the more
+		// permissive flash model so the Lab keeps working without manual config.
+		if ( is_wp_error( $result ) && 'pmg_no_image' === $result->get_error_code() && $model !== $fallback ) {
+			$retry = self::run( $session, $source_url, $fallback, $prompt, 'overlay', $lead_id );
+			if ( ! is_wp_error( $retry ) ) {
+				return $retry;
+			}
+		}
+
+		return $result;
 	}
 
 	/**

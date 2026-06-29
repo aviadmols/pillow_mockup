@@ -299,14 +299,35 @@ class PMG_Lab {
 	 * @return array
 	 */
 	protected function error_payload( WP_Error $error ) {
-		$message = trim( (string) $error->get_error_message() );
-		if ( '' === $message ) {
-			$message = __( 'We couldn\'t create your pillow. Please try again.', 'pillow-mockup-generator' );
+		$code = (string) $error->get_error_code();
+		$raw  = trim( (string) $error->get_error_message() );
+
+		switch ( $code ) {
+			case 'pmg_no_image':
+				// OpenRouter returned 200 but no image — usually the model's safety
+				// content_filter blocking a benign request (common on the "pro" models).
+				$message = __( 'The AI did not return an image for this photo — it was most likely blocked by the model\'s safety filter. Try a different photo, or set the Cutout model to "Nano Banana (Gemini 2.5 Flash Image)".', 'pillow-mockup-generator' );
+				break;
+			case 'pmg_not_configured':
+			case 'pmg_no_key':
+				$message = __( 'The AI service is not configured yet. Add your OpenRouter API key in Settings.', 'pillow-mockup-generator' );
+				break;
+			case 'pmg_no_image_provided':
+				$message = __( 'No image was provided. Please choose a photo.', 'pillow-mockup-generator' );
+				break;
+			case 'pmg_api_error':
+				$message = '' !== $raw ? $raw : __( 'The AI service returned an error. Please try again.', 'pillow-mockup-generator' );
+				break;
+			default:
+				$message = '' !== $raw ? $raw : __( 'We couldn\'t create your pillow. Please try again.', 'pillow-mockup-generator' );
+				break;
 		}
+
 		return array(
 			'code'    => 'error',
-			'error'   => (string) $error->get_error_code(),
+			'error'   => $code,
 			'message' => $message,
+			'detail'  => $raw,
 		);
 	}
 
