@@ -10,6 +10,13 @@
 	color: #1a1a1a;
 }
 
+/* Honor the [hidden] attribute even on elements that set display below
+ * (loading overlay, size selector). Without this, `display: flex` overrides
+ * the browser default `[hidden] { display: none }`. */
+.pmg-lab [hidden] {
+	display: none !important;
+}
+
 .pmg-lab__empty {
 	padding: 40px 20px;
 	text-align: center;

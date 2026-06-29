@@ -277,15 +277,7 @@ class PMG_Lab {
 		$result = $this->build_overlay( $request->get_param( 'image' ), $request->get_param( 'session' ) );
 
 		if ( is_wp_error( $result ) ) {
-			$data   = $result->get_error_data();
-			$status = ( is_array( $data ) && ! empty( $data['status'] ) ) ? (int) $data['status'] : 500;
-			return new WP_REST_Response(
-				array(
-					'code'    => 'error',
-					'message' => __( 'We couldn\'t create your pillow. Please try again.', 'pillow-mockup-generator' ),
-				),
-				$status
-			);
+			return new WP_REST_Response( $this->error_payload( $result ), 200 );
 		}
 
 		return new WP_REST_Response(
@@ -295,6 +287,26 @@ class PMG_Lab {
 				'url'     => $result['url'],
 			),
 			200
+		);
+	}
+
+	/**
+	 * Build a JSON error payload that surfaces the real reason (the Lab is an
+	 * experimental/admin tool, so showing the underlying error helps debugging).
+	 * Returned with HTTP 200 so the message is always readable on the client.
+	 *
+	 * @param WP_Error $error Error.
+	 * @return array
+	 */
+	protected function error_payload( WP_Error $error ) {
+		$message = trim( (string) $error->get_error_message() );
+		if ( '' === $message ) {
+			$message = __( 'We couldn\'t create your pillow. Please try again.', 'pillow-mockup-generator' );
+		}
+		return array(
+			'code'    => 'error',
+			'error'   => (string) $error->get_error_code(),
+			'message' => $message,
 		);
 	}
 
@@ -326,15 +338,7 @@ class PMG_Lab {
 
 		$result = $this->build_overlay( $image, $session );
 		if ( is_wp_error( $result ) ) {
-			$data   = $result->get_error_data();
-			$status = ( is_array( $data ) && ! empty( $data['status'] ) ) ? (int) $data['status'] : 500;
-			wp_send_json(
-				array(
-					'code'    => 'error',
-					'message' => __( 'We couldn\'t create your pillow. Please try again.', 'pillow-mockup-generator' ),
-				),
-				$status
-			);
+			wp_send_json( $this->error_payload( $result ), 200 );
 		}
 
 		wp_send_json(
